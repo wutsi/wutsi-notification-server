@@ -53,7 +53,8 @@ class EventHandler(
         logger.add("sender_id", payload.senderId)
         logger.add("recipient_id", payload.recipientId)
         logger.add("transaction_id", payload.transactionId)
-        logger.add("phone_number", phoneNumber)
+        logger.add("sender_display_name", sender.displayName)
+        logger.add("recipient_phone_number", phoneNumber)
 
         val tenant = tenantProvider.get(payload.tenantId)
         val formatter = DecimalFormat(tenant.monetaryFormat)
