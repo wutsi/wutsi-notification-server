@@ -57,8 +57,11 @@ internal class EventHandlerTest {
         // GIVEN
         val payload = createTransactionEventPayload("TRANSFER")
 
-        val sender = createAccount(payload.senderId)
+        val sender = createAccount(payload.recipientId, "Ray Sponsible")
         doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(payload.senderId)
+
+        val recipient = createAccount(payload.recipientId, "John Smith")
+        doReturn(GetAccountResponse(recipient)).whenever(accountApi).getAccount(payload.recipientId)
 
         // WHEN
         val event = Event(
@@ -71,7 +74,7 @@ internal class EventHandlerTest {
         val request = argumentCaptor<SendMessageRequest>()
         verify(smsApi).sendMessage(request.capture())
 
-        assertEquals(sender.phone?.number, request.firstValue.phoneNumber)
+        assertEquals(recipient.phone?.number, request.firstValue.phoneNumber)
         assertEquals("You have received 5,000 XAF from Ray Sponsible", request.firstValue.message)
     }
 
@@ -79,9 +82,6 @@ internal class EventHandlerTest {
     fun onCashin() {
         // GIVEN
         val payload = createTransactionEventPayload("CASHIN")
-
-        val sender = createAccount(payload.senderId)
-        doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(payload.senderId)
 
         // WHEN
         val event = Event(
@@ -98,9 +98,6 @@ internal class EventHandlerTest {
     fun onCashout() {
         // GIVEN
         val payload = createTransactionEventPayload("CASHOUT")
-
-        val sender = createAccount(payload.senderId)
-        doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(payload.senderId)
 
         // WHEN
         val event = Event(
@@ -123,9 +120,9 @@ internal class EventHandlerTest {
         transactionId = "320930293029302"
     )
 
-    private fun createAccount(id: Long) = Account(
+    private fun createAccount(id: Long, displayName: String) = Account(
         id = id,
-        displayName = "Ray Sponsible",
+        displayName = displayName,
         language = "en",
         phone = Phone(
             number = "+237695096577"

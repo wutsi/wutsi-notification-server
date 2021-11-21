@@ -35,14 +35,15 @@ class EventHandler(
         if (EventURN.TRANSACTION_SUCCESSFULL.urn.equals(event.type)) {
             val payload = objectMapper.readValue(event.payload, TransactionEventPayload::class.java)
             if (payload.type == "TRANSFER") {
+                val recipient = accountApi.getAccount(payload.recipientId).account
                 val sender = accountApi.getAccount(payload.senderId).account
-                sendSMS(payload, sender)
+                sendSMS(payload, sender, recipient)
             }
         }
     }
 
-    private fun sendSMS(payload: TransactionEventPayload, sender: Account) {
-        val phoneNumber = sender.phone?.number
+    private fun sendSMS(payload: TransactionEventPayload, sender: Account, recipient: Account) {
+        val phoneNumber = recipient.phone?.number
             ?: return
 
         val logger = RequestKVLogger()
@@ -62,7 +63,7 @@ class EventHandler(
                     message = getText(
                         key = "sms.message",
                         args = arrayOf(formatter.format(payload.amount), sender.displayName ?: ""),
-                        locale = Locale(sender.language)
+                        locale = Locale(recipient.language)
                     ),
                     phoneNumber = phoneNumber
                 )
