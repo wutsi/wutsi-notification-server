@@ -3,6 +3,7 @@ package com.wutsi.platform.notification.event
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.wutsi.platform.account.WutsiAccountApi
 import com.wutsi.platform.account.dto.Account
+import com.wutsi.platform.core.logging.RequestKVLogger
 import com.wutsi.platform.core.stream.Event
 import com.wutsi.platform.notification.service.TenantProvider
 import com.wutsi.platform.payment.event.EventURN
@@ -44,18 +45,34 @@ class EventHandler(
         val phoneNumber = sender.phone?.number
             ?: return
 
+        val logger = RequestKVLogger()
+        logger.add("tenant_id", payload.tenantId)
+        logger.add("amount", payload.amount)
+        logger.add("currency", payload.currency)
+        logger.add("sender_id", payload.senderId)
+        logger.add("recipient_id", payload.recipientId)
+        logger.add("transaction_id", payload.transactionId)
+        logger.add("phone_number", phoneNumber)
+
         val tenant = tenantProvider.get(payload.tenantId)
         val formatter = DecimalFormat(tenant.monetaryFormat)
-        smsApi.sendMessage(
-            SendMessageRequest(
-                message = getText(
-                    key = "sms.message",
-                    args = arrayOf(formatter.format(payload.amount), sender.displayName ?: ""),
-                    locale = Locale(sender.language)
-                ),
-                phoneNumber = phoneNumber
-            )
-        )
+        try {
+            val messageId = smsApi.sendMessage(
+                SendMessageRequest(
+                    message = getText(
+                        key = "sms.message",
+                        args = arrayOf(formatter.format(payload.amount), sender.displayName ?: ""),
+                        locale = Locale(sender.language)
+                    ),
+                    phoneNumber = phoneNumber
+                )
+            ).id
+            logger.add("message_id", messageId)
+        } catch (ex: Exception) {
+            logger.setException(ex)
+        } finally {
+            logger.log()
+        }
     }
 
     protected fun getText(key: String, args: Array<Any?> = emptyArray(), locale: Locale) =
