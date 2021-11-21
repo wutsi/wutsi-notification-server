@@ -50,10 +50,10 @@ class EventHandler(
         logger.add("tenant_id", payload.tenantId)
         logger.add("amount", payload.amount)
         logger.add("currency", payload.currency)
-        logger.add("sender_id", payload.senderId)
-        logger.add("recipient_id", payload.recipientId)
         logger.add("transaction_id", payload.transactionId)
+        logger.add("sender_id", payload.senderId)
         logger.add("sender_display_name", sender.displayName)
+        logger.add("recipient_id", payload.recipientId)
         logger.add("recipient_phone_number", phoneNumber)
 
         val tenant = tenantProvider.get(payload.tenantId)
