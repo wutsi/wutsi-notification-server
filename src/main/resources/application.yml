@@ -1,0 +1,68 @@
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 512
+
+management:
+  endpoint:
+    health:
+      show-details: always
+    info:
+      git:
+        mode: full
+  endpoints:
+    web:
+      exposure:
+        include: "beans,flyway,health,info,scheduledtasks"
+
+spring:
+  main:
+    lazy-initialization: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
+  jackson:
+    deserialization:
+      FAIL_ON_UNKNOWN_PROPERTIES: false
+      ACCEPT_EMPTY_STRING_AS_NULL_OBJECT: true
+    mapper:
+      ACCEPT_CASE_INSENSITIVE_ENUMS: true
+      ACCEPT_CASE_INSENSITIVE_PROPERTIES: true
+    default-property-inclusion: non_null
+
+wutsi:
+  client-id: wutsi-notification
+  application:
+    name: wutsi-notification
+  platform:
+    security:
+      type: none
+      api-key: 0225af2a-3e82-11ec-83e1-06555f6379b7
+      api-key-provider:
+        type: env
+      token-provider:
+        type: custom
+    cache:
+      name: ${wutsi.application.name}
+      type: local
+    stream:
+      name: ${wutsi.application.name}
+      type: local
+    tracing:
+      client-id: ${wutsi.application.name}
+      device-id-provider:
+        type: header
+
+logging:
+  level:
+    root: INFO
+    com.wutsi.platform.notification: DEBUG
+  pattern:
+    console: "%d type=%level logger=%class{20} thread=%thread %m%n"
+    file: "%d type=%level logger=%class{20} thread=%thread %m%n"
+
+

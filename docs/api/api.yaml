@@ -1,0 +1,35 @@
+openapi: "3.0.0"
+info:
+  title: "Wutsi SMS API"
+  description: |
+    Wutsi Notification Service. It sends notifications to users via SMS, Email or Push Notification
+  version: "1.0.0"
+
+servers:
+  - url: https://wutsi-notification-server-test.herokuapp.com
+    description: Sandbox
+  - url: https://wutsi-notification-server-prod.herokuapp.com
+    description: Production
+
+#paths:
+#  /v1/sms/notifications:
+#    post:
+#      operationId: "send-notifications"
+#      description: Sends all notifications
+#      responses:
+#        200:
+#          description: Success
+#        409:
+#          description: SMS delivery failed
+#      tags:
+#        - Message
+#      security:
+#        - api_key: [ 'notification-manage' ]
+#
+#
+#components:
+#  securitySchemes:
+#    api_key:
+#      type: apiKey
+#      in: header
+#      name: Authorization
