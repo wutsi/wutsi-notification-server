@@ -75,7 +75,7 @@ internal class EventHandlerTest {
         verify(smsApi).sendMessage(request.capture())
 
         assertEquals(recipient.phone?.number, request.firstValue.phoneNumber)
-        assertEquals("You have received 5,000 XAF from Ray Sponsible", request.firstValue.message)
+        assertEquals("Wutsi: You have received 5,000 XAF from Ray Sponsible", request.firstValue.message)
     }
 
     @Test
