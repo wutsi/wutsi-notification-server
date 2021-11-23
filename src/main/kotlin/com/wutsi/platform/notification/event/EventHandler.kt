@@ -2,7 +2,6 @@ package com.wutsi.platform.notification.event
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.wutsi.platform.account.WutsiAccountApi
-import com.wutsi.platform.account.dto.Account
 import com.wutsi.platform.core.logging.RequestKVLogger
 import com.wutsi.platform.core.stream.Event
 import com.wutsi.platform.notification.service.TenantProvider
@@ -35,29 +34,26 @@ class EventHandler(
         if (EventURN.TRANSACTION_SUCCESSFULL.urn.equals(event.type)) {
             val payload = objectMapper.readValue(event.payload, TransactionEventPayload::class.java)
             if (payload.type == "TRANSFER" && payload.recipientId != null) {
-                val recipient = accountApi.getAccount(payload.recipientId!!).account
-                val sender = accountApi.getAccount(payload.userId).account
-                sendSMS(payload, sender, recipient)
+                sendSMS(payload)
             }
         }
     }
 
-    private fun sendSMS(payload: TransactionEventPayload, sender: Account, recipient: Account) {
-        val phoneNumber = recipient.phone?.number
+    private fun sendSMS(payload: TransactionEventPayload) {
         val logger = RequestKVLogger()
         logger.add("tenant_id", payload.tenantId)
         logger.add("amount", payload.amount)
         logger.add("currency", payload.currency)
         logger.add("transaction_id", payload.transactionId)
-        logger.add("sender_id", sender.id)
-        logger.add("sender_display_name", sender.displayName)
-        logger.add("recipient_id", recipient.id)
-        logger.add("recipient_phone_number", phoneNumber)
+        logger.add("sender_id", payload.userId)
+        logger.add("recipient_id", payload.recipientId)
 
         try {
-            if (phoneNumber == null)
-                return
+            val recipient = accountApi.getAccount(payload.recipientId!!).account
+            val phoneNumber = recipient.phone?.number
+                ?: return
 
+            val sender = accountApi.getAccount(payload.userId).account
             val tenant = tenantProvider.get(payload.tenantId)
             val formatter = DecimalFormat(tenant.monetaryFormat)
             val messageId = smsApi.sendMessage(
