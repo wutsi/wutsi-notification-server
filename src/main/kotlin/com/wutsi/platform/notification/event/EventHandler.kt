@@ -44,17 +44,18 @@ class EventHandler(
 
     private fun sendSMS(payload: TransactionEventPayload, sender: Account, recipient: Account) {
         val phoneNumber = recipient.phone?.number
-            ?: return
-
         val logger = RequestKVLogger()
         logger.add("tenant_id", payload.tenantId)
         logger.add("amount", payload.amount)
         logger.add("currency", payload.currency)
         logger.add("transaction_id", payload.transactionId)
-        logger.add("user_id", payload.userId)
+        logger.add("sender_id", sender.id)
         logger.add("sender_display_name", sender.displayName)
-        logger.add("recipient_id", payload.recipientId)
+        logger.add("recipient_id", recipient.id)
         logger.add("recipient_phone_number", phoneNumber)
+
+        if (phoneNumber == null)
+            return
 
         val tenant = tenantProvider.get(payload.tenantId)
         val formatter = DecimalFormat(tenant.monetaryFormat)
