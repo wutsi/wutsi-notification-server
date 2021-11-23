@@ -34,9 +34,9 @@ class EventHandler(
         LOGGER.info("onEvent(${event.type},...)")
         if (EventURN.TRANSACTION_SUCCESSFULL.urn.equals(event.type)) {
             val payload = objectMapper.readValue(event.payload, TransactionEventPayload::class.java)
-            if (payload.type == "TRANSFER") {
-                val recipient = accountApi.getAccount(payload.recipientId).account
-                val sender = accountApi.getAccount(payload.senderId).account
+            if (payload.type == "TRANSFER" && payload.recipientId != null) {
+                val recipient = accountApi.getAccount(payload.recipientId!!).account
+                val sender = accountApi.getAccount(payload.userId).account
                 sendSMS(payload, sender, recipient)
             }
         }
@@ -51,7 +51,7 @@ class EventHandler(
         logger.add("amount", payload.amount)
         logger.add("currency", payload.currency)
         logger.add("transaction_id", payload.transactionId)
-        logger.add("sender_id", payload.senderId)
+        logger.add("user_id", payload.userId)
         logger.add("sender_display_name", sender.displayName)
         logger.add("recipient_id", payload.recipientId)
         logger.add("recipient_phone_number", phoneNumber)
