@@ -54,12 +54,12 @@ class EventHandler(
         logger.add("recipient_id", recipient.id)
         logger.add("recipient_phone_number", phoneNumber)
 
-        if (phoneNumber == null)
-            return
-
-        val tenant = tenantProvider.get(payload.tenantId)
-        val formatter = DecimalFormat(tenant.monetaryFormat)
         try {
+            if (phoneNumber == null)
+                return
+
+            val tenant = tenantProvider.get(payload.tenantId)
+            val formatter = DecimalFormat(tenant.monetaryFormat)
             val messageId = smsApi.sendMessage(
                 SendMessageRequest(
                     message = getText(
