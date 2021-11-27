@@ -31,7 +31,7 @@ class EventHandler(
     @EventListener
     fun onEvent(event: Event) {
         LOGGER.info("onEvent(${event.type},...)")
-        if (EventURN.TRANSACTION_SUCCESSFULL.urn.equals(event.type)) {
+        if (EventURN.TRANSACTION_SUCCESSFULL.urn == event.type) {
             val payload = objectMapper.readValue(event.payload, TransactionEventPayload::class.java)
             if (payload.type == "TRANSFER") {
                 sendSMS(payload)
@@ -69,6 +69,7 @@ class EventHandler(
             logger.add("message_id", messageId)
         } catch (ex: Exception) {
             logger.setException(ex)
+            throw ex
         } finally {
             logger.log()
         }

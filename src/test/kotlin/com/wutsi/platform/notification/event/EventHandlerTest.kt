@@ -16,6 +16,7 @@ import com.wutsi.platform.payment.event.EventURN
 import com.wutsi.platform.payment.event.TransactionEventPayload
 import com.wutsi.platform.sms.WutsiSmsApi
 import com.wutsi.platform.sms.dto.SendMessageRequest
+import com.wutsi.platform.sms.dto.SendMessageResponse
 import com.wutsi.platform.tenant.WutsiTenantApi
 import com.wutsi.platform.tenant.dto.GetTenantResponse
 import com.wutsi.platform.tenant.dto.Tenant
@@ -62,6 +63,9 @@ internal class EventHandlerTest {
 
         val recipient = createAccount(payload.recipientId, "John Smith")
         doReturn(GetAccountResponse(recipient)).whenever(accountApi).getAccount(payload.recipientId!!)
+
+        val smsResponse = SendMessageResponse(id = "xxxx")
+        doReturn(smsResponse).whenever(smsApi).sendMessage(any())
 
         // WHEN
         val event = Event(
