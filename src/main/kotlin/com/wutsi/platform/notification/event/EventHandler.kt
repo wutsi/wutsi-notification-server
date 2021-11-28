@@ -50,9 +50,7 @@ class EventHandler(
 
         try {
             val recipient = accountApi.getAccount(payload.recipientId!!).account
-            val phoneNumber = recipient.phone?.number
-                ?: return
-
+            val phoneNumber = recipient.phone!!.number
             val sender = accountApi.getAccount(payload.userId).account
             val tenant = tenantProvider.get(payload.tenantId)
             val formatter = DecimalFormat(tenant.monetaryFormat)
