@@ -59,7 +59,7 @@ internal class EventHandlerTest {
         val payload = createTransactionEventPayload("TRANSFER")
 
         val sender = createAccount(payload.recipientId, "Ray Sponsible")
-        doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(payload.userId)
+        doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(payload.accountId)
 
         val recipient = createAccount(payload.recipientId, "John Smith")
         doReturn(GetAccountResponse(recipient)).whenever(accountApi).getAccount(payload.recipientId!!)
@@ -120,7 +120,7 @@ internal class EventHandlerTest {
         currency = "XAF",
         amount = 5000.0,
         recipientId = 1L,
-        userId = 11L,
+        accountId = 11L,
         transactionId = "320930293029302"
     )
 

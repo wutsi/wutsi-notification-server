@@ -45,13 +45,13 @@ class EventHandler(
         logger.add("amount", payload.amount)
         logger.add("currency", payload.currency)
         logger.add("transaction_id", payload.transactionId)
-        logger.add("user_id", payload.userId)
+        logger.add("account_id", payload.accountId)
         logger.add("recipient_id", payload.recipientId)
 
         try {
             val recipient = accountApi.getAccount(payload.recipientId!!).account
             val phoneNumber = recipient.phone!!.number
-            val sender = accountApi.getAccount(payload.userId).account
+            val sender = accountApi.getAccount(payload.accountId).account
             val tenant = tenantProvider.get(payload.tenantId)
             val formatter = DecimalFormat(tenant.monetaryFormat)
             val messageId = smsApi.sendMessage(
@@ -65,9 +65,6 @@ class EventHandler(
                 )
             ).id
             logger.add("message_id", messageId)
-        } catch (ex: Exception) {
-            logger.setException(ex)
-            throw ex
         } finally {
             logger.log()
         }
