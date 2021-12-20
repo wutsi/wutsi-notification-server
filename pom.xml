@@ -30,7 +30,7 @@
     <kotlin-mockito.version>2.2.0</kotlin-mockito.version>
     <klint.version>0.43.0</klint.version>
     <maven-antrun-plugin.version>3.0.0</maven-antrun-plugin.version>
-    <wutsi-platform-core.version>0.0.74</wutsi-platform-core.version>
+    <wutsi-platform-core.version>0.0.81</wutsi-platform-core.version>
     <wutsi-account.version>1.0.12</wutsi-account.version>
     <wutsi-payment.version>0.0.16</wutsi-payment.version>
     <wutsi-security.version>0.0.12</wutsi-security.version>

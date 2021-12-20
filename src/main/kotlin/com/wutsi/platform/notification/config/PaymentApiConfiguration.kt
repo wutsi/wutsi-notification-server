@@ -5,7 +5,6 @@ import com.wutsi.platform.core.security.TokenProvider
 import com.wutsi.platform.core.security.feign.FeignApiKeyRequestInterceptor
 import com.wutsi.platform.core.security.feign.FeignAuthorizationRequestInterceptor
 import com.wutsi.platform.core.stream.EventStream
-import com.wutsi.platform.core.stream.EventSubscription
 import com.wutsi.platform.core.tracing.feign.FeignTracingRequestInterceptor
 import com.wutsi.platform.payment.Environment.PRODUCTION
 import com.wutsi.platform.payment.Environment.SANDBOX
@@ -25,9 +24,6 @@ public class PaymentApiConfiguration(
     private val env: Environment,
     private val eventStream: EventStream
 ) {
-    @Bean
-    fun paymentSubscription() = EventSubscription("wutsi-payment", eventStream)
-
     @Bean
     fun paymentApi(): WutsiPaymentApi =
         WutsiPaymentApiBuilder().build(
