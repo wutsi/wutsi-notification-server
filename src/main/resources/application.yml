@@ -42,10 +42,6 @@ wutsi:
     security:
       type: none
       api-key: 0225af2a-3e82-11ec-83e1-06555f6379b7
-      api-key-provider:
-        type: env
-      token-provider:
-        type: custom
     cache:
       name: ${wutsi.application.name}
       type: local
