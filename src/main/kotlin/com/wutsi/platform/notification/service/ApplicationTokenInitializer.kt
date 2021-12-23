@@ -21,7 +21,7 @@ class ApplicationTokenInitializer(
 
     @Async
     fun init() {
-        LOGGER.info("Authenticating the Application")
+        LOGGER.info("Authenticating the Application...")
 
         applicationTokenProvider.value = securityApi.authenticate(
             AuthenticationRequest(
