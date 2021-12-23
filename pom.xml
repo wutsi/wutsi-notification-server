@@ -30,12 +30,12 @@
     <kotlin-mockito.version>2.2.0</kotlin-mockito.version>
     <klint.version>0.43.2</klint.version>
     <maven-antrun-plugin.version>3.0.0</maven-antrun-plugin.version>
-    <wutsi-platform-core.version>0.0.81</wutsi-platform-core.version>
-    <wutsi-account.version>1.0.12</wutsi-account.version>
-    <wutsi-payment.version>0.0.16</wutsi-payment.version>
-    <wutsi-security.version>0.0.12</wutsi-security.version>
-    <wutsi-sms.version>1.0.2</wutsi-sms.version>
-    <wutsi-tenant.version>0.0.9</wutsi-tenant.version>
+    <wutsi-platform-core.version>0.0.87</wutsi-platform-core.version>
+    <wutsi-account.version>1.0.23</wutsi-account.version>
+    <wutsi-payment.version>0.0.24</wutsi-payment.version>
+    <wutsi-security.version>0.0.13</wutsi-security.version>
+    <wutsi-sms.version>1.0.8</wutsi-sms.version>
+    <wutsi-tenant.version>0.0.11</wutsi-tenant.version>
   </properties>
 
   <dependencies>

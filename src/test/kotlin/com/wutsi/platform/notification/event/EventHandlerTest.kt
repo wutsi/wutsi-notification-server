@@ -11,6 +11,7 @@ import com.wutsi.platform.account.WutsiAccountApi
 import com.wutsi.platform.account.dto.Account
 import com.wutsi.platform.account.dto.GetAccountResponse
 import com.wutsi.platform.account.dto.Phone
+import com.wutsi.platform.core.logging.KVLogger
 import com.wutsi.platform.core.stream.Event
 import com.wutsi.platform.payment.event.EventURN
 import com.wutsi.platform.payment.event.TransactionEventPayload
@@ -37,6 +38,9 @@ internal class EventHandlerTest {
 
     @MockBean
     private lateinit var tenantApi: WutsiTenantApi
+
+    @MockBean
+    private lateinit var logger: KVLogger
 
     @Autowired
     private lateinit var eventHandler: EventHandler
