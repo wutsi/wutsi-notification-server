@@ -28,7 +28,7 @@ class EventHandler(
     fun onEvent(event: Event) {
         if (EventURN.TRANSACTION_SUCCESSFULL.urn == event.type) {
             val payload = objectMapper.readValue(event.payload, TransactionEventPayload::class.java)
-            if (payload.type == "TRANSFER") {
+            if (payload.type == "TRANSFER" || payload.type == "PAYMENT") {
                 sendSMS(payload)
             }
         }
@@ -50,7 +50,7 @@ class EventHandler(
         val messageId = smsApi.sendMessage(
             SendMessageRequest(
                 message = getText(
-                    key = "sms.message",
+                    key = "sms.message-${payload.type.lowercase()}",
                     args = arrayOf(formatter.format(payload.amount), sender.displayName ?: ""),
                     locale = Locale(recipient.language)
                 ),

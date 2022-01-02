@@ -83,6 +83,35 @@ internal class EventHandlerTest {
     }
 
     @Test
+    fun onPayment() {
+        // GIVEN
+        val payload = createTransactionEventPayload("PAYMENT")
+
+        val sender = createAccount(payload.recipientId, "Ray Sponsible")
+        doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(payload.accountId)
+
+        val recipient = createAccount(payload.recipientId, "John Smith")
+        doReturn(GetAccountResponse(recipient)).whenever(accountApi).getAccount(payload.recipientId!!)
+
+        val smsResponse = SendMessageResponse(id = "xxxx")
+        doReturn(smsResponse).whenever(smsApi).sendMessage(any())
+
+        // WHEN
+        val event = Event(
+            type = EventURN.TRANSACTION_SUCCESSFULL.urn,
+            payload = objectMapper.writeValueAsString(payload)
+        )
+        eventHandler.onEvent(event)
+
+        // THEN
+        val request = argumentCaptor<SendMessageRequest>()
+        verify(smsApi).sendMessage(request.capture())
+
+        assertEquals(recipient.phone?.number, request.firstValue.phoneNumber)
+        assertEquals("Wutsi: You have received a payment of 5,000 XAF", request.firstValue.message)
+    }
+
+    @Test
     fun onCashin() {
         // GIVEN
         val payload = createTransactionEventPayload("CASHIN")
@@ -124,10 +153,10 @@ internal class EventHandlerTest {
         transactionId = "320930293029302"
     )
 
-    private fun createAccount(id: Long?, displayName: String) = Account(
+    private fun createAccount(id: Long?, displayName: String, language: String = "en") = Account(
         id = id ?: -1,
         displayName = displayName,
-        language = "en",
+        language = language,
         phone = Phone(
             number = "+237695096577"
         )
