@@ -83,6 +83,35 @@ internal class EventHandlerTest {
     }
 
     @Test
+    fun onPaymentFailed() {
+        // GIVEN
+        val payload = createTransactionEventPayload("PAYMENT")
+
+        val sender = createAccount(payload.recipientId, "Ray Sponsible")
+        doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(payload.accountId)
+
+        val recipient = createAccount(payload.recipientId, "John Smith")
+        doReturn(GetAccountResponse(recipient)).whenever(accountApi).getAccount(payload.recipientId!!)
+
+        val smsResponse = SendMessageResponse(id = "xxxx")
+        doReturn(smsResponse).whenever(smsApi).sendMessage(any())
+
+        // WHEN
+        val event = Event(
+            type = EventURN.TRANSACTION_FAILED.urn,
+            payload = objectMapper.writeValueAsString(payload)
+        )
+        eventHandler.onEvent(event)
+
+        // THEN
+        val request = argumentCaptor<SendMessageRequest>()
+        verify(smsApi).sendMessage(request.capture())
+
+        assertEquals(recipient.phone?.number, request.firstValue.phoneNumber)
+        assertEquals("Wutsi: The payment of 5,000 XAF has failed", request.firstValue.message)
+    }
+
+    @Test
     fun onPayment() {
         // GIVEN
         val payload = createTransactionEventPayload("PAYMENT")

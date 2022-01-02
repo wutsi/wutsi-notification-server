@@ -28,19 +28,18 @@ class EventHandler(
     fun onEvent(event: Event) {
         if (EventURN.TRANSACTION_SUCCESSFULL.urn == event.type) {
             val payload = objectMapper.readValue(event.payload, TransactionEventPayload::class.java)
-            if (payload.type == "TRANSFER" || payload.type == "PAYMENT") {
-                sendSMS(payload)
-            }
+            onSuccess(payload)
+        } else if (EventURN.TRANSACTION_FAILED.urn == event.type) {
+            val payload = objectMapper.readValue(event.payload, TransactionEventPayload::class.java)
+            onFailure(payload)
         }
     }
 
-    private fun sendSMS(payload: TransactionEventPayload) {
-        logger.add("tenant_id", payload.tenantId)
-        logger.add("amount", payload.amount)
-        logger.add("currency", payload.currency)
-        logger.add("transaction_id", payload.transactionId)
-        logger.add("account_id", payload.accountId)
-        logger.add("recipient_id", payload.recipientId)
+    private fun onSuccess(payload: TransactionEventPayload) {
+        if (payload.type != "TRANSFER" && payload.type != "PAYMENT")
+            return
+
+        log(payload)
 
         val recipient = accountApi.getAccount(payload.recipientId!!).account
         val phoneNumber = recipient.phone!!.number
@@ -50,14 +49,48 @@ class EventHandler(
         val messageId = smsApi.sendMessage(
             SendMessageRequest(
                 message = getText(
-                    key = "sms.message-${payload.type.lowercase()}",
+                    key = "sms.${payload.type.lowercase()}-successful",
                     args = arrayOf(formatter.format(payload.amount), sender.displayName ?: ""),
                     locale = Locale(recipient.language)
                 ),
                 phoneNumber = phoneNumber
             )
         ).id
+
         logger.add("message_id", messageId)
+    }
+
+    private fun onFailure(payload: TransactionEventPayload) {
+        if (payload.type != "PAYMENT")
+            return
+
+        log(payload)
+
+        val recipient = accountApi.getAccount(payload.recipientId!!).account
+        val phoneNumber = recipient.phone!!.number
+        val tenant = tenantApi.getTenant(payload.tenantId).tenant
+        val formatter = DecimalFormat(tenant.monetaryFormat)
+        val messageId = smsApi.sendMessage(
+            SendMessageRequest(
+                message = getText(
+                    key = "sms.${payload.type.lowercase()}-failed",
+                    args = arrayOf(formatter.format(payload.amount)),
+                    locale = Locale(recipient.language)
+                ),
+                phoneNumber = phoneNumber
+            )
+        ).id
+
+        logger.add("message_id", messageId)
+    }
+
+    private fun log(payload: TransactionEventPayload) {
+        logger.add("tenant_id", payload.tenantId)
+        logger.add("amount", payload.amount)
+        logger.add("currency", payload.currency)
+        logger.add("transaction_id", payload.transactionId)
+        logger.add("account_id", payload.accountId)
+        logger.add("recipient_id", payload.recipientId)
     }
 
     protected fun getText(key: String, args: Array<Any?> = emptyArray(), locale: Locale) =
