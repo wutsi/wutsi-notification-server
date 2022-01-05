@@ -176,7 +176,8 @@ internal class EventHandlerTest {
         tenantId = 1,
         type = type,
         currency = "XAF",
-        amount = 5000.0,
+        amount = 5100.0,
+        net = 5000.0,
         recipientId = 1L,
         accountId = 11L,
         transactionId = "320930293029302"

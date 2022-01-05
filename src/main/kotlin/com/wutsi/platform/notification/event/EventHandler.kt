@@ -50,7 +50,7 @@ class EventHandler(
             SendMessageRequest(
                 message = getText(
                     key = "sms.${payload.type.lowercase()}-successful",
-                    args = arrayOf(formatter.format(payload.amount), sender.displayName ?: ""),
+                    args = arrayOf(formatter.format(payload.net), sender.displayName ?: ""),
                     locale = Locale(recipient.language)
                 ),
                 phoneNumber = phoneNumber
@@ -74,7 +74,7 @@ class EventHandler(
             SendMessageRequest(
                 message = getText(
                     key = "sms.${payload.type.lowercase()}-failed",
-                    args = arrayOf(formatter.format(payload.amount)),
+                    args = arrayOf(formatter.format(payload.net)),
                     locale = Locale(recipient.language)
                 ),
                 phoneNumber = phoneNumber
@@ -87,6 +87,7 @@ class EventHandler(
     private fun log(payload: TransactionEventPayload) {
         logger.add("tenant_id", payload.tenantId)
         logger.add("amount", payload.amount)
+        logger.add("net", payload.net)
         logger.add("currency", payload.currency)
         logger.add("transaction_id", payload.transactionId)
         logger.add("account_id", payload.accountId)
