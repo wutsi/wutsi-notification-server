@@ -50,7 +50,10 @@ class EventHandler(
             SendMessageRequest(
                 message = getText(
                     key = "sms.${payload.type.lowercase()}-successful",
-                    args = arrayOf(formatter.format(payload.net), sender.displayName ?: ""),
+                    args = if (payload.type == "TRANSFER")
+                        arrayOf(sender.displayName ?: "", formatter.format(payload.net))
+                    else
+                        arrayOf(formatter.format(payload.net)),
                     locale = Locale(recipient.language)
                 ),
                 phoneNumber = phoneNumber
