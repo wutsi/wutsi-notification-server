@@ -7,11 +7,19 @@ import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.never
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
+import com.wutsi.ecommerce.order.WutsiOrderApi
+import com.wutsi.ecommerce.order.dto.GetOrderResponse
+import com.wutsi.ecommerce.order.event.OrderEventPayload
 import com.wutsi.platform.account.WutsiAccountApi
 import com.wutsi.platform.account.dto.Account
 import com.wutsi.platform.account.dto.GetAccountResponse
 import com.wutsi.platform.account.dto.Phone
 import com.wutsi.platform.core.stream.Event
+import com.wutsi.platform.core.tracing.TracingContext
+import com.wutsi.platform.payment.WutsiPaymentApi
+import com.wutsi.platform.payment.dto.GetTransactionResponse
+import com.wutsi.platform.payment.dto.Transaction
+import com.wutsi.platform.payment.entity.TransactionType
 import com.wutsi.platform.payment.event.EventURN
 import com.wutsi.platform.payment.event.TransactionEventPayload
 import com.wutsi.platform.sms.WutsiSmsApi
@@ -38,6 +46,15 @@ internal class EventHandlerTest {
     @MockBean
     private lateinit var tenantApi: WutsiTenantApi
 
+    @MockBean
+    private lateinit var paymentApi: WutsiPaymentApi
+
+    @MockBean
+    private lateinit var orderApi: WutsiOrderApi
+
+    @MockBean
+    private lateinit var tracingContext: TracingContext
+
     @Autowired
     private lateinit var eventHandler: EventHandler
 
@@ -46,30 +63,34 @@ internal class EventHandlerTest {
 
     @BeforeEach
     fun setUp() {
+        doReturn("1").whenever(tracingContext).tenantId()
+
         val tenant = Tenant(
             id = 1,
             monetaryFormat = "#,###,##0 XAF"
         )
         doReturn(GetTenantResponse(tenant)).whenever(tenantApi).getTenant(any())
+
+        val smsResponse = SendMessageResponse(id = "xxxx")
+        doReturn(smsResponse).whenever(smsApi).sendMessage(any())
     }
 
     @Test
     fun onTransfer() {
         // GIVEN
-        val payload = createTransactionEventPayload("TRANSFER")
+        val payload = createTransactionEventPayload(TransactionType.TRANSFER)
+        val tx = createTransaction(TransactionType.TRANSFER)
+        doReturn(GetTransactionResponse(tx)).whenever(paymentApi).getTransaction(any())
 
-        val sender = createAccount(payload.recipientId, "Ray Sponsible")
-        doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(payload.accountId)
+        val sender = createAccount(tx.accountId, "Ray Sponsible")
+        doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(tx.accountId)
 
-        val recipient = createAccount(payload.recipientId, "John Smith")
-        doReturn(GetAccountResponse(recipient)).whenever(accountApi).getAccount(payload.recipientId!!)
-
-        val smsResponse = SendMessageResponse(id = "xxxx")
-        doReturn(smsResponse).whenever(smsApi).sendMessage(any())
+        val recipient = createAccount(tx.recipientId, "John Smith")
+        doReturn(GetAccountResponse(recipient)).whenever(accountApi).getAccount(tx.recipientId!!)
 
         // WHEN
         val event = Event(
-            type = EventURN.TRANSACTION_SUCCESSFULL.urn,
+            type = EventURN.TRANSACTION_SUCCESSFUL.urn,
             payload = objectMapper.writeValueAsString(payload)
         )
         eventHandler.onEvent(event)
@@ -83,22 +104,26 @@ internal class EventHandlerTest {
     }
 
     @Test
-    fun onPaymentFailed() {
-        // GIVEN
-        val payload = createTransactionEventPayload("PAYMENT")
+    fun onCashout() = noOp(TransactionType.CASHOUT)
 
-        val sender = createAccount(payload.recipientId, "Ray Sponsible")
-        doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(payload.accountId)
+    @Test
+    fun onCashin() = noOp(TransactionType.CASHIN)
 
-        val recipient = createAccount(payload.recipientId, "John Smith")
-        doReturn(GetAccountResponse(recipient)).whenever(accountApi).getAccount(payload.recipientId!!)
+    @Test
+    fun onPayment() = noOp(TransactionType.PAYMENT)
 
-        val smsResponse = SendMessageResponse(id = "xxxx")
-        doReturn(smsResponse).whenever(smsApi).sendMessage(any())
+    @Test
+    fun onOrderReady() {
+        val payload = createOrderEventPayload()
+        val order = createOrder()
+        doReturn(GetOrderResponse(order)).whenever(orderApi).getOrder(any())
+
+        val merchant = createAccount(order.merchantId, "Ray Sponsible")
+        doReturn(GetAccountResponse(merchant)).whenever(accountApi).getAccount(order.merchantId)
 
         // WHEN
         val event = Event(
-            type = EventURN.TRANSACTION_FAILED.urn,
+            type = com.wutsi.ecommerce.order.event.EventURN.ORDER_READY.urn,
             payload = objectMapper.writeValueAsString(payload)
         )
         eventHandler.onEvent(event)
@@ -107,47 +132,17 @@ internal class EventHandlerTest {
         val request = argumentCaptor<SendMessageRequest>()
         verify(smsApi).sendMessage(request.capture())
 
-        assertEquals(recipient.phone?.number, request.firstValue.phoneNumber)
-        assertEquals("Wutsi: The payment of 5,000 XAF has failed", request.firstValue.message)
+        assertEquals(merchant.phone?.number, request.firstValue.phoneNumber)
+        assertEquals("Wutsi: You have received a new order of 5,100 XAF", request.firstValue.message)
     }
 
-    @Test
-    fun onPayment() {
+    private fun noOp(type: TransactionType) {
         // GIVEN
-        val payload = createTransactionEventPayload("PAYMENT")
-
-        val sender = createAccount(payload.recipientId, "Ray Sponsible")
-        doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(payload.accountId)
-
-        val recipient = createAccount(payload.recipientId, "John Smith")
-        doReturn(GetAccountResponse(recipient)).whenever(accountApi).getAccount(payload.recipientId!!)
-
-        val smsResponse = SendMessageResponse(id = "xxxx")
-        doReturn(smsResponse).whenever(smsApi).sendMessage(any())
+        val payload = createTransactionEventPayload(type)
 
         // WHEN
         val event = Event(
-            type = EventURN.TRANSACTION_SUCCESSFULL.urn,
-            payload = objectMapper.writeValueAsString(payload)
-        )
-        eventHandler.onEvent(event)
-
-        // THEN
-        val request = argumentCaptor<SendMessageRequest>()
-        verify(smsApi).sendMessage(request.capture())
-
-        assertEquals(recipient.phone?.number, request.firstValue.phoneNumber)
-        assertEquals("Wutsi: You have received a payment of 5,000 XAF", request.firstValue.message)
-    }
-
-    @Test
-    fun onCashin() {
-        // GIVEN
-        val payload = createTransactionEventPayload("CASHIN")
-
-        // WHEN
-        val event = Event(
-            type = EventURN.TRANSACTION_SUCCESSFULL.urn,
+            type = EventURN.TRANSACTION_SUCCESSFUL.urn,
             payload = objectMapper.writeValueAsString(payload)
         )
         eventHandler.onEvent(event)
@@ -156,31 +151,31 @@ internal class EventHandlerTest {
         verify(smsApi, never()).sendMessage(any())
     }
 
-    @Test
-    fun onCashout() {
-        // GIVEN
-        val payload = createTransactionEventPayload("CASHOUT")
+    private fun createOrderEventPayload() = OrderEventPayload(
+        orderId = "39043094"
+    )
 
-        // WHEN
-        val event = Event(
-            type = EventURN.TRANSACTION_SUCCESSFULL.urn,
-            payload = objectMapper.writeValueAsString(payload)
-        )
-        eventHandler.onEvent(event)
+    private fun createOrder() = com.wutsi.ecommerce.order.dto.Order(
+        id = "39043094",
+        accountId = 1L,
+        merchantId = 11L,
+        totalPrice = 5100.0,
+        currency = "XAF"
+    )
 
-        // THEN
-        verify(smsApi, never()).sendMessage(any())
-    }
+    private fun createTransactionEventPayload(type: TransactionType) = TransactionEventPayload(
+        type = type.name,
+        transactionId = "320930293029302"
+    )
 
-    private fun createTransactionEventPayload(type: String) = TransactionEventPayload(
-        tenantId = 1,
-        type = type,
+    private fun createTransaction(type: TransactionType) = Transaction(
+        id = "320930293029302",
         currency = "XAF",
         amount = 5100.0,
         net = 5000.0,
         recipientId = 1L,
         accountId = 11L,
-        transactionId = "320930293029302"
+        type = type.name
     )
 
     private fun createAccount(id: Long?, displayName: String, language: String = "en") = Account(

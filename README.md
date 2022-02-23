@@ -66,3 +66,4 @@ That's it... the API is up and running! Start sending requests :-)
 
 - [API](https://wutsi.github.io/wutsi-notification-server/api/)
 - [Documentation](docs/)
+- [Event Handling](docs/Event.md)

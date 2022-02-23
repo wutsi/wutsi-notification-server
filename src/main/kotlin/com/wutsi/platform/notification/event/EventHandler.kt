@@ -1,14 +1,20 @@
 package com.wutsi.platform.notification.event
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.wutsi.ecommerce.order.WutsiOrderApi
+import com.wutsi.ecommerce.order.event.OrderEventPayload
 import com.wutsi.platform.account.WutsiAccountApi
 import com.wutsi.platform.core.logging.KVLogger
 import com.wutsi.platform.core.stream.Event
+import com.wutsi.platform.core.tracing.TracingContext
+import com.wutsi.platform.payment.WutsiPaymentApi
+import com.wutsi.platform.payment.entity.TransactionType
 import com.wutsi.platform.payment.event.EventURN
 import com.wutsi.platform.payment.event.TransactionEventPayload
 import com.wutsi.platform.sms.WutsiSmsApi
 import com.wutsi.platform.sms.dto.SendMessageRequest
 import com.wutsi.platform.tenant.WutsiTenantApi
+import com.wutsi.platform.tenant.dto.Tenant
 import org.springframework.context.MessageSource
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Service
@@ -22,79 +28,78 @@ class EventHandler(
     private val tenantApi: WutsiTenantApi,
     private val objectMapper: ObjectMapper,
     private val messages: MessageSource,
-    private val logger: KVLogger
+    private val logger: KVLogger,
+    private val paymentApi: WutsiPaymentApi,
+    private val orderApi: WutsiOrderApi,
+    private val tracingContext: TracingContext,
 ) {
     @EventListener
     fun onEvent(event: Event) {
-        if (EventURN.TRANSACTION_SUCCESSFULL.urn == event.type) {
+        if (EventURN.TRANSACTION_SUCCESSFUL.urn == event.type) {
             val payload = objectMapper.readValue(event.payload, TransactionEventPayload::class.java)
-            onSuccess(payload)
-        } else if (EventURN.TRANSACTION_FAILED.urn == event.type) {
-            val payload = objectMapper.readValue(event.payload, TransactionEventPayload::class.java)
-            onFailure(payload)
+            logger.add("transaction_id", payload.transactionId)
+            logger.add("transaction_type", payload.type)
+            logger.add("order_id", payload.orderId)
+
+            if (payload.type == TransactionType.TRANSFER.name) {
+                onTransferSuccessful(payload)
+            }
+        } else if (com.wutsi.ecommerce.order.event.EventURN.ORDER_READY.urn == event.type) {
+            val payload = objectMapper.readValue(event.payload, OrderEventPayload::class.java)
+            logger.add("order_id", payload.orderId)
+
+            onOrderReady(payload)
         }
     }
 
-    private fun onSuccess(payload: TransactionEventPayload) {
-        if (payload.type != "TRANSFER" && payload.type != "PAYMENT")
+    private fun onTransferSuccessful(payload: TransactionEventPayload) {
+        val tx = paymentApi.getTransaction(payload.transactionId).transaction
+        if (tx.recipientId == null)
             return
 
-        log(payload)
-
-        val recipient = accountApi.getAccount(payload.recipientId!!).account
-        val phoneNumber = recipient.phone!!.number
-        val sender = accountApi.getAccount(payload.accountId).account
-        val tenant = tenantApi.getTenant(payload.tenantId).tenant
+        val tenant = getTenant()
+        val sender = accountApi.getAccount(tx.accountId).account
+        val recipient = accountApi.getAccount(tx.recipientId!!).account
         val formatter = DecimalFormat(tenant.monetaryFormat)
+
         val messageId = smsApi.sendMessage(
             SendMessageRequest(
                 message = getText(
-                    key = "sms.${payload.type.lowercase()}-successful",
-                    args = if (payload.type == "TRANSFER")
-                        arrayOf(sender.displayName ?: "", formatter.format(payload.net))
-                    else
-                        arrayOf(formatter.format(payload.net)),
+                    key = "sms.transfer-successful",
+                    args = arrayOf(sender.displayName ?: "", formatter.format(tx.net)),
                     locale = Locale(recipient.language)
                 ),
-                phoneNumber = phoneNumber
+                phoneNumber = recipient.phone!!.number
+
             )
         ).id
 
         logger.add("message_id", messageId)
     }
 
-    private fun onFailure(payload: TransactionEventPayload) {
-        if (payload.type != "PAYMENT")
-            return
-
-        log(payload)
-
-        val recipient = accountApi.getAccount(payload.recipientId!!).account
-        val phoneNumber = recipient.phone!!.number
-        val tenant = tenantApi.getTenant(payload.tenantId).tenant
+    private fun onOrderReady(payload: OrderEventPayload) {
+        val tenant = getTenant()
+        val order = orderApi.getOrder(payload.orderId).order
+        val merchant = accountApi.getAccount(order.merchantId).account
         val formatter = DecimalFormat(tenant.monetaryFormat)
+
         val messageId = smsApi.sendMessage(
             SendMessageRequest(
                 message = getText(
-                    key = "sms.${payload.type.lowercase()}-failed",
-                    args = arrayOf(formatter.format(payload.net)),
-                    locale = Locale(recipient.language)
+                    key = "sms.order-ready",
+                    args = arrayOf(formatter.format(order.totalPrice)),
+                    locale = Locale(merchant.language)
                 ),
-                phoneNumber = phoneNumber
+                phoneNumber = merchant.phone!!.number
             )
         ).id
 
         logger.add("message_id", messageId)
     }
 
-    private fun log(payload: TransactionEventPayload) {
-        logger.add("tenant_id", payload.tenantId)
-        logger.add("amount", payload.amount)
-        logger.add("net", payload.net)
-        logger.add("currency", payload.currency)
-        logger.add("transaction_id", payload.transactionId)
-        logger.add("account_id", payload.accountId)
-        logger.add("recipient_id", payload.recipientId)
+    private fun getTenant(): Tenant {
+        val tenantId = tracingContext.tenantId()!!.toLong()
+        return tenantApi.getTenant(tenantId).tenant
     }
 
     protected fun getText(key: String, args: Array<Any?> = emptyArray(), locale: Locale) =
