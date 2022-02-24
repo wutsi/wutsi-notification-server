@@ -13,4 +13,4 @@ This service listen to event stream, and send notification to users via SMS, Ema
 # Links
 
 - [API](https://wutsi.github.io/wutsi-notification-server/api/)
-- [Event Handling](docs/Event.md)
+- [Event](docs/Event.md)
