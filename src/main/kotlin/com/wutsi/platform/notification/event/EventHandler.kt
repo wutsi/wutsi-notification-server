@@ -66,7 +66,7 @@ class EventHandler(
             SendMessageRequest(
                 message = getText(
                     key = "sms.transfer-successful",
-                    args = arrayOf(sender.displayName ?: "", formatter.format(tx.net)),
+                    args = arrayOf(formatter.format(tx.net), sender.displayName ?: ""),
                     locale = Locale(recipient.language)
                 ),
                 phoneNumber = recipient.phone!!.number

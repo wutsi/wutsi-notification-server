@@ -100,7 +100,35 @@ internal class EventHandlerTest {
         verify(smsApi).sendMessage(request.capture())
 
         assertEquals(recipient.phone?.number, request.firstValue.phoneNumber)
-        assertEquals("Wutsi: Ray Sponsible sent you 5,000 XAF", request.firstValue.message)
+        assertEquals("Wutsi: You have received 5,000 XAF from Ray Sponsible", request.firstValue.message)
+    }
+
+    @Test
+    fun onTransferFr() {
+        // GIVEN
+        val payload = createTransactionEventPayload(TransactionType.TRANSFER)
+        val tx = createTransaction(TransactionType.TRANSFER)
+        doReturn(GetTransactionResponse(tx)).whenever(paymentApi).getTransaction(any())
+
+        val sender = createAccount(tx.accountId, "Ray Sponsible")
+        doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(tx.accountId)
+
+        val recipient = createAccount(tx.recipientId, "John Smith", language = "fr")
+        doReturn(GetAccountResponse(recipient)).whenever(accountApi).getAccount(tx.recipientId!!)
+
+        // WHEN
+        val event = Event(
+            type = EventURN.TRANSACTION_SUCCESSFUL.urn,
+            payload = objectMapper.writeValueAsString(payload)
+        )
+        eventHandler.onEvent(event)
+
+        // THEN
+        val request = argumentCaptor<SendMessageRequest>()
+        verify(smsApi).sendMessage(request.capture())
+
+        assertEquals(recipient.phone?.number, request.firstValue.phoneNumber)
+        assertEquals("Wutsi: Vous avez recu 5,000 XAF de Ray Sponsible", request.firstValue.message)
     }
 
     @Test
@@ -133,7 +161,7 @@ internal class EventHandlerTest {
         verify(smsApi).sendMessage(request.capture())
 
         assertEquals(merchant.phone?.number, request.firstValue.phoneNumber)
-        assertEquals("Wutsi: You have received a new order of 5,100 XAF", request.firstValue.message)
+        assertEquals("Wutsi: You have received a new Order", request.firstValue.message)
     }
 
     private fun noOp(type: TransactionType) {
