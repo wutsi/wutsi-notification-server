@@ -161,7 +161,7 @@ internal class EventHandlerTest {
         verify(smsApi).sendMessage(request.capture())
 
         assertEquals(merchant.phone?.number, request.firstValue.phoneNumber)
-        assertEquals("Wutsi: You have received a new Order", request.firstValue.message)
+        assertEquals("Wutsi: You have received a new order of 5,100 XAF", request.firstValue.message)
     }
 
     private fun noOp(type: TransactionType) {
