@@ -141,7 +141,7 @@ internal class EventHandlerTest {
     fun onPayment() = noOp(TransactionType.PAYMENT)
 
     @Test
-    fun onOrderReady() {
+    fun onOrderOpened() {
         val payload = createOrderEventPayload()
         val order = createOrder()
         doReturn(GetOrderResponse(order)).whenever(orderApi).getOrder(any())
@@ -151,7 +151,7 @@ internal class EventHandlerTest {
 
         // WHEN
         val event = Event(
-            type = com.wutsi.ecommerce.order.event.EventURN.ORDER_READY.urn,
+            type = com.wutsi.ecommerce.order.event.EventURN.ORDER_OPENED.urn,
             payload = objectMapper.writeValueAsString(payload)
         )
         eventHandler.onEvent(event)
@@ -161,7 +161,7 @@ internal class EventHandlerTest {
         verify(smsApi).sendMessage(request.capture())
 
         assertEquals(merchant.phone?.number, request.firstValue.phoneNumber)
-        assertEquals("Wutsi: You have received a new order of 5,100 XAF", request.firstValue.message)
+        assertEquals("Wutsi: You have received order #3094 - 5,100 XAF", request.firstValue.message)
     }
 
     private fun noOp(type: TransactionType) {

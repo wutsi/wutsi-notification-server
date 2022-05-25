@@ -44,11 +44,11 @@ class EventHandler(
             if (payload.type == TransactionType.TRANSFER.name) {
                 onTransferSuccessful(payload)
             }
-        } else if (com.wutsi.ecommerce.order.event.EventURN.ORDER_READY.urn == event.type) {
+        } else if (com.wutsi.ecommerce.order.event.EventURN.ORDER_OPENED.urn == event.type) {
             val payload = objectMapper.readValue(event.payload, OrderEventPayload::class.java)
             logger.add("order_id", payload.orderId)
 
-            onOrderReady(payload)
+            onOrderOpened(payload)
         }
     }
 
@@ -77,7 +77,7 @@ class EventHandler(
         logger.add("message_id", messageId)
     }
 
-    private fun onOrderReady(payload: OrderEventPayload) {
+    private fun onOrderOpened(payload: OrderEventPayload) {
         val tenant = getTenant()
         val order = orderApi.getOrder(payload.orderId).order
         val merchant = accountApi.getAccount(order.merchantId).account
@@ -87,7 +87,7 @@ class EventHandler(
             SendMessageRequest(
                 message = getText(
                     key = "sms.order-ready",
-                    args = arrayOf(formatter.format(order.totalPrice)),
+                    args = arrayOf(order.id.takeLast(4), formatter.format(order.totalPrice)),
                     locale = Locale(merchant.language)
                 ),
                 phoneNumber = merchant.phone!!.number
