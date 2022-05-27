@@ -7,10 +7,12 @@ import com.nhaarman.mockitokotlin2.never
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import com.wutsi.ecommerce.order.event.OrderEventPayload
+import com.wutsi.ecommerce.shipping.event.ShippingOrderEventPayload
 import com.wutsi.platform.core.stream.Event
 import com.wutsi.platform.core.tracing.TracingContext
 import com.wutsi.platform.notification.service.OrderNotificationService
 import com.wutsi.platform.notification.service.PaymentNotificationService
+import com.wutsi.platform.notification.service.ShippingNotificationService
 import com.wutsi.platform.payment.entity.TransactionType
 import com.wutsi.platform.payment.event.EventURN
 import com.wutsi.platform.payment.event.TransactionEventPayload
@@ -39,6 +41,9 @@ internal class EventHandlerTest {
 
     @MockBean
     private lateinit var payment: PaymentNotificationService
+
+    @MockBean
+    private lateinit var shipping: ShippingNotificationService
 
     @MockBean
     private lateinit var order: OrderNotificationService
@@ -142,9 +147,72 @@ internal class EventHandlerTest {
         noOp()
     }
 
+    // Shipping events
+    @Test
+    fun onShippingReadyForPickup() {
+        val payload = ShippingOrderEventPayload(111)
+
+        // WHEN
+        val event = Event(
+            type = com.wutsi.ecommerce.shipping.event.EventURN.SHIPPING_READY_FOR_PICKUP.urn,
+            payload = objectMapper.writeValueAsString(payload)
+        )
+        eventHandler.onEvent(event)
+
+        // THEN
+        verify(shipping).onShippingReadyForPickup(payload.shippingOrderId, tenant)
+    }
+
+    @Test
+    fun onShippingCancelled() {
+        val payload = ShippingOrderEventPayload(111)
+
+        // WHEN
+        val event = Event(
+            type = com.wutsi.ecommerce.shipping.event.EventURN.SHIPPING_CANCELLED.urn,
+            payload = objectMapper.writeValueAsString(payload)
+        )
+        eventHandler.onEvent(event)
+
+        // THEN
+        noOp()
+    }
+
+    @Test
+    fun onShippingDelivered() {
+        val payload = ShippingOrderEventPayload(111)
+
+        // WHEN
+        val event = Event(
+            type = com.wutsi.ecommerce.shipping.event.EventURN.SHIPPING_DELIVERED.urn,
+            payload = objectMapper.writeValueAsString(payload)
+        )
+        eventHandler.onEvent(event)
+
+        // THEN
+        noOp()
+    }
+
+    @Test
+    fun onShippingInTransit() {
+        val payload = ShippingOrderEventPayload(111)
+
+        // WHEN
+        val event = Event(
+            type = com.wutsi.ecommerce.shipping.event.EventURN.SHIPPING_IN_TRANSIT.urn,
+            payload = objectMapper.writeValueAsString(payload)
+        )
+        eventHandler.onEvent(event)
+
+        // THEN
+        noOp()
+    }
+
     private fun noOp() {
         verify(order, never()).onOrderOpened(any(), any())
+        verify(order, never()).onOrderCancelled(any(), any())
         verify(payment, never()).onTransferSuccessful(any(), any())
+        verify(shipping, never()).onShippingReadyForPickup(any(), any())
     }
 
     private fun createOrderEventPayload() = OrderEventPayload(

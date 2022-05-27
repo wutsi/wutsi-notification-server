@@ -37,6 +37,7 @@
     <wutsi-sms.version>1.0.9</wutsi-sms.version>
     <wutsi-tenant.version>0.0.39</wutsi-tenant.version>
     <wutsi-order.version>0.0.21</wutsi-order.version>
+    <wutsi-shipping.version>0.0.20</wutsi-shipping.version>
   </properties>
 
   <dependencies>
@@ -75,6 +76,11 @@
       <groupId>com.wutsi.ecommerce.order</groupId>
       <artifactId>wutsi-order-sdk-kotlin</artifactId>
       <version>${wutsi-order.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.wutsi.ecommerce.shipping</groupId>
+      <artifactId>wutsi-shipping-sdk-kotlin</artifactId>
+      <version>${wutsi-shipping.version}</version>
     </dependency>
 
     <dependency>

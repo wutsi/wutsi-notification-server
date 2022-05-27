@@ -8,7 +8,7 @@ This service listen to event stream, and send notification to users via SMS, Ema
 
 # Architecture
 
-![](https://www.plantuml.com/plantuml/png/RO-npi8m38HtFuMbVquVu1-gBip0Y527A3KGAN6gn6dfsvDIYW1ryidtdKxN9D5HidTWWky34mkUnop9AWvYBzPeiO5R_3kHSs44E6RAX6gJWjUprvCdbhPWXqNkxkQc-Keh4M97SVRtitYxy8DZLLKrBfN_A55pqcQkKZGKBC5N73_OPy5AmUOaLQyZaazjoPI37JaxK9oW8UwoTmy0)
+![](https://www.plantuml.com/plantuml/png/VOyz3eCm34Ptdy9Ivt001iGLEbPLXmZSDbBYHB43ulP5vOTsONI-zvwKLjHcBS535qEAJAnu7ukACnpLFLrdrKKsGdcW_C3BZRoF8y2rK24qPp00h6koKo3MlL9LLODBeKRDbiLsNvE66PDDYxcdV4Y7iWp_iBnTIevV1_yZxEFgmDaVJODRCyZ-MkDyOK_UpUTq6e2Mk2_1Vm00)
 
 # Links
 
