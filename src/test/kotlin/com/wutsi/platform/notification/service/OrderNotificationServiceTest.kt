@@ -7,6 +7,10 @@ import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import com.wutsi.ecommerce.order.WutsiOrderApi
 import com.wutsi.ecommerce.order.dto.GetOrderResponse
+import com.wutsi.ecommerce.shipping.WutsiShippingApi
+import com.wutsi.ecommerce.shipping.dto.GetShippingResponse
+import com.wutsi.ecommerce.shipping.dto.Shipping
+import com.wutsi.ecommerce.shipping.entity.ShippingType
 import com.wutsi.platform.account.WutsiAccountApi
 import com.wutsi.platform.account.dto.Account
 import com.wutsi.platform.account.dto.GetAccountResponse
@@ -27,6 +31,9 @@ import kotlin.test.assertEquals
 internal class OrderNotificationServiceTest {
     @MockBean
     private lateinit var accountApi: WutsiAccountApi
+
+    @MockBean
+    private lateinit var shippingApi: WutsiShippingApi
 
     @MockBean
     private lateinit var smsApi: WutsiSmsApi
@@ -91,12 +98,44 @@ internal class OrderNotificationServiceTest {
         assertEquals("Wutsi: Your order #3094 has been cancelled", request.firstValue.message)
     }
 
-    private fun createOrder() = com.wutsi.ecommerce.order.dto.Order(
+    @Test
+    fun onOrderReadyToPickupInStore() {
+        // GIVEN
+        val order = createOrder(11)
+        doReturn(GetOrderResponse(order)).whenever(orderApi).getOrder(any())
+
+        val shipping = createShipping(11, ShippingType.IN_STORE_PICKUP)
+        doReturn(GetShippingResponse(shipping)).whenever(shippingApi).getShipping(any())
+
+        val customer = createAccount(order.accountId, "Roger Milla")
+        doReturn(GetAccountResponse(customer)).whenever(accountApi).getAccount(any())
+
+        // WHEN
+        service.onOrderReadyForPickup("111", tenant)
+
+        // THEN
+        val request = argumentCaptor<SendMessageRequest>()
+        verify(smsApi).sendMessage(request.capture())
+
+        assertEquals(customer.phone?.number, request.firstValue.phoneNumber)
+        assertEquals(
+            "Wutsi: Your order #3094 is now ready and available in store for pickup.",
+            request.firstValue.message
+        )
+    }
+
+    private fun createOrder(shippingId: Long? = null) = com.wutsi.ecommerce.order.dto.Order(
         id = "39043094",
         accountId = 1L,
         merchantId = 11L,
         totalPrice = 5100.0,
-        currency = "XAF"
+        currency = "XAF",
+        shippingId = shippingId
+    )
+
+    private fun createShipping(id: Long, type: ShippingType) = Shipping(
+        id = id,
+        type = type.name
     )
 
     private fun createAccount(id: Long?, displayName: String, language: String = "en") = Account(

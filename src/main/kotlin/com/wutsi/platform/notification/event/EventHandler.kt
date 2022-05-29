@@ -2,13 +2,11 @@ package com.wutsi.platform.notification.event
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.wutsi.ecommerce.order.event.OrderEventPayload
-import com.wutsi.ecommerce.shipping.event.ShippingOrderEventPayload
 import com.wutsi.platform.core.logging.KVLogger
 import com.wutsi.platform.core.stream.Event
 import com.wutsi.platform.core.tracing.TracingContext
 import com.wutsi.platform.notification.service.OrderNotificationService
 import com.wutsi.platform.notification.service.PaymentNotificationService
-import com.wutsi.platform.notification.service.ShippingNotificationService
 import com.wutsi.platform.payment.entity.TransactionType
 import com.wutsi.platform.payment.event.EventURN
 import com.wutsi.platform.payment.event.TransactionEventPayload
@@ -24,7 +22,6 @@ class EventHandler(
     private val tenantApi: WutsiTenantApi,
     private val payment: PaymentNotificationService,
     private val order: OrderNotificationService,
-    private val shipping: ShippingNotificationService,
     private val logger: KVLogger
 ) {
     @EventListener
@@ -47,10 +44,10 @@ class EventHandler(
             val payload = objectMapper.readValue(event.payload, OrderEventPayload::class.java)
             logger.add("order_id", payload.orderId)
             messageId = order.onOrderCancelled(payload.orderId, getTenant())
-        } else if (com.wutsi.ecommerce.shipping.event.EventURN.SHIPPING_READY_FOR_PICKUP.urn == event.type) {
-            val payload = objectMapper.readValue(event.payload, ShippingOrderEventPayload::class.java)
-            logger.add("shipping_order_id", payload.shippingOrderId)
-            messageId = shipping.onShippingReadyForPickup(payload.shippingOrderId, getTenant())
+        } else if (com.wutsi.ecommerce.order.event.EventURN.ORDER_READY_FOR_PICKUP.urn == event.type) {
+            val payload = objectMapper.readValue(event.payload, OrderEventPayload::class.java)
+            logger.add("order_id", payload.orderId)
+            messageId = order.onOrderReadyForPickup(payload.orderId, getTenant())
         }
 
         logger.add("message_id", messageId)

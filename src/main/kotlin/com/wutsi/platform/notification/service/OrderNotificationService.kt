@@ -2,6 +2,8 @@ package com.wutsi.platform.notification.service
 
 import com.wutsi.ecommerce.order.WutsiOrderApi
 import com.wutsi.ecommerce.order.dto.Order
+import com.wutsi.ecommerce.shipping.WutsiShippingApi
+import com.wutsi.ecommerce.shipping.entity.ShippingType
 import com.wutsi.platform.account.WutsiAccountApi
 import com.wutsi.platform.sms.WutsiSmsApi
 import com.wutsi.platform.sms.dto.SendMessageRequest
@@ -17,6 +19,7 @@ class OrderNotificationService(
     private val smsApi: WutsiSmsApi,
     private val messages: MessageSource,
     private val orderApi: WutsiOrderApi,
+    private val shippingApi: WutsiShippingApi
 ) {
     fun onOrderOpened(orderId: String, tenant: Tenant): String {
         val order = orderApi.getOrder(orderId).order
@@ -49,6 +52,29 @@ class OrderNotificationService(
                 phoneNumber = merchant.phone!!.number
             )
         ).id
+    }
+
+    /**
+     * Send notification for in-store pickup
+     */
+    fun onOrderReadyForPickup(orderId: String, tenant: Tenant): String? {
+        val order = orderApi.getOrder(orderId).order
+        val shipping = order.shippingId?.let { shippingApi.getShipping(it).shipping }
+
+        if (shipping?.type == ShippingType.IN_STORE_PICKUP.name) {
+            val customer = accountApi.getAccount(order.accountId).account
+            return smsApi.sendMessage(
+                SendMessageRequest(
+                    message = getText(
+                        key = "sms.order-ready-for-pickup-in-store",
+                        args = arrayOf(shortOrderId(order)),
+                        locale = Locale(customer.language)
+                    ),
+                    phoneNumber = customer.phone!!.number
+                )
+            ).id
+        }
+        return null
     }
 
     private fun shortOrderId(order: Order): String =
