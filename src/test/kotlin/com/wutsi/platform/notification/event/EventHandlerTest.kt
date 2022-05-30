@@ -9,8 +9,6 @@ import com.nhaarman.mockitokotlin2.whenever
 import com.wutsi.ecommerce.order.event.OrderEventPayload
 import com.wutsi.platform.core.stream.Event
 import com.wutsi.platform.core.tracing.TracingContext
-import com.wutsi.platform.notification.service.OrderNotificationService
-import com.wutsi.platform.notification.service.PaymentNotificationService
 import com.wutsi.platform.payment.entity.TransactionType
 import com.wutsi.platform.payment.event.EventURN
 import com.wutsi.platform.payment.event.TransactionEventPayload
@@ -38,10 +36,10 @@ internal class EventHandlerTest {
     private lateinit var objectMapper: ObjectMapper
 
     @MockBean
-    private lateinit var payment: PaymentNotificationService
+    private lateinit var payment: PaymentEventHandler
 
     @MockBean
-    private lateinit var order: OrderNotificationService
+    private lateinit var order: OrderEventHandler
 
     val tenant = Tenant(
         id = 1,

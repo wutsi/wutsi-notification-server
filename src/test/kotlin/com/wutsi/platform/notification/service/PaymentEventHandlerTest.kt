@@ -10,6 +10,7 @@ import com.wutsi.platform.account.dto.Account
 import com.wutsi.platform.account.dto.GetAccountResponse
 import com.wutsi.platform.account.dto.Phone
 import com.wutsi.platform.core.tracing.TracingContext
+import com.wutsi.platform.notification.event.PaymentEventHandler
 import com.wutsi.platform.payment.WutsiPaymentApi
 import com.wutsi.platform.payment.dto.GetTransactionResponse
 import com.wutsi.platform.payment.dto.Transaction
@@ -26,7 +27,7 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import kotlin.test.assertEquals
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-internal class PaymentNotificationServiceTest {
+internal class PaymentEventHandlerTest {
     @MockBean
     private lateinit var accountApi: WutsiAccountApi
 
@@ -40,7 +41,7 @@ internal class PaymentNotificationServiceTest {
     private lateinit var tracingContext: TracingContext
 
     @Autowired
-    private lateinit var service: PaymentNotificationService
+    private lateinit var service: PaymentEventHandler
 
     val tenant = Tenant(
         id = 1,

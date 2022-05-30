@@ -5,8 +5,6 @@ import com.wutsi.ecommerce.order.event.OrderEventPayload
 import com.wutsi.platform.core.logging.KVLogger
 import com.wutsi.platform.core.stream.Event
 import com.wutsi.platform.core.tracing.TracingContext
-import com.wutsi.platform.notification.service.OrderNotificationService
-import com.wutsi.platform.notification.service.PaymentNotificationService
 import com.wutsi.platform.payment.entity.TransactionType
 import com.wutsi.platform.payment.event.EventURN
 import com.wutsi.platform.payment.event.TransactionEventPayload
@@ -20,8 +18,8 @@ class EventHandler(
     private val objectMapper: ObjectMapper,
     private val tracingContext: TracingContext,
     private val tenantApi: WutsiTenantApi,
-    private val payment: PaymentNotificationService,
-    private val order: OrderNotificationService,
+    private val payment: PaymentEventHandler,
+    private val order: OrderEventHandler,
     private val logger: KVLogger
 ) {
     @EventListener

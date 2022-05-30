@@ -1,10 +1,11 @@
-package com.wutsi.platform.notification.service
+package com.wutsi.platform.notification.event
 
 import com.wutsi.ecommerce.order.WutsiOrderApi
 import com.wutsi.ecommerce.order.dto.Order
 import com.wutsi.ecommerce.shipping.WutsiShippingApi
 import com.wutsi.ecommerce.shipping.entity.ShippingType
 import com.wutsi.platform.account.WutsiAccountApi
+import com.wutsi.platform.core.logging.KVLogger
 import com.wutsi.platform.sms.WutsiSmsApi
 import com.wutsi.platform.sms.dto.SendMessageRequest
 import com.wutsi.platform.tenant.dto.Tenant
@@ -14,23 +15,24 @@ import java.text.DecimalFormat
 import java.util.Locale
 
 @Service
-class OrderNotificationService(
+class OrderEventHandler(
     private val accountApi: WutsiAccountApi,
     private val smsApi: WutsiSmsApi,
     private val messages: MessageSource,
     private val orderApi: WutsiOrderApi,
-    private val shippingApi: WutsiShippingApi
+    private val shippingApi: WutsiShippingApi,
+    private val logger: KVLogger
 ) {
     fun onOrderOpened(orderId: String, tenant: Tenant): String {
         val order = orderApi.getOrder(orderId).order
         val merchant = accountApi.getAccount(order.merchantId).account
-        val formatter = DecimalFormat(tenant.monetaryFormat)
+        logger.add("merchant_id", merchant.id)
 
         return smsApi.sendMessage(
             SendMessageRequest(
                 message = getText(
                     key = "sms.order-opened",
-                    args = arrayOf(shortOrderId(order), formatter.format(order.totalPrice)),
+                    args = arrayOf(shortOrderId(order), DecimalFormat(tenant.monetaryFormat).format(order.totalPrice)),
                     locale = Locale(merchant.language)
                 ),
                 phoneNumber = merchant.phone!!.number
@@ -40,16 +42,17 @@ class OrderNotificationService(
 
     fun onOrderCancelled(orderId: String, tenant: Tenant): String {
         val order = orderApi.getOrder(orderId).order
-        val merchant = accountApi.getAccount(order.merchantId).account
+        val customer = accountApi.getAccount(order.accountId).account
+        logger.add("customer_id", customer.id)
 
         return smsApi.sendMessage(
             SendMessageRequest(
                 message = getText(
                     key = "sms.order-cancelled",
                     args = arrayOf(shortOrderId(order)),
-                    locale = Locale(merchant.language)
+                    locale = Locale(customer.language)
                 ),
-                phoneNumber = merchant.phone!!.number
+                phoneNumber = customer.phone!!.number
             )
         ).id
     }
@@ -60,9 +63,13 @@ class OrderNotificationService(
     fun onOrderReadyForPickup(orderId: String, tenant: Tenant): String? {
         val order = orderApi.getOrder(orderId).order
         val shipping = order.shippingId?.let { shippingApi.getShipping(it).shipping }
+        logger.add("shipping_id", shipping?.id)
+        logger.add("shipping_type", shipping?.type)
 
         if (shipping?.type == ShippingType.IN_STORE_PICKUP.name) {
             val customer = accountApi.getAccount(order.accountId).account
+            logger.add("customer_id", customer.id)
+
             return smsApi.sendMessage(
                 SendMessageRequest(
                     message = getText(

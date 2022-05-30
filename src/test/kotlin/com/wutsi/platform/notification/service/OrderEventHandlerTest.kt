@@ -16,6 +16,7 @@ import com.wutsi.platform.account.dto.Account
 import com.wutsi.platform.account.dto.GetAccountResponse
 import com.wutsi.platform.account.dto.Phone
 import com.wutsi.platform.core.tracing.TracingContext
+import com.wutsi.platform.notification.event.OrderEventHandler
 import com.wutsi.platform.sms.WutsiSmsApi
 import com.wutsi.platform.sms.dto.SendMessageRequest
 import com.wutsi.platform.sms.dto.SendMessageResponse
@@ -28,7 +29,7 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import kotlin.test.assertEquals
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-internal class OrderNotificationServiceTest {
+internal class OrderEventHandlerTest {
     @MockBean
     private lateinit var accountApi: WutsiAccountApi
 
@@ -45,7 +46,7 @@ internal class OrderNotificationServiceTest {
     private lateinit var tracingContext: TracingContext
 
     @Autowired
-    private lateinit var service: OrderNotificationService
+    private lateinit var service: OrderEventHandler
 
     private val tenant = Tenant(
         id = 1,
@@ -84,8 +85,8 @@ internal class OrderNotificationServiceTest {
         val order = createOrder()
         doReturn(GetOrderResponse(order)).whenever(orderApi).getOrder(any())
 
-        val merchant = createAccount(order.merchantId, "Ray Sponsible")
-        doReturn(GetAccountResponse(merchant)).whenever(accountApi).getAccount(order.merchantId)
+        val customer = createAccount(order.merchantId, "Ray Sponsible")
+        doReturn(GetAccountResponse(customer)).whenever(accountApi).getAccount(order.accountId)
 
         // WHEN
         service.onOrderCancelled(order.id, tenant)
@@ -94,7 +95,7 @@ internal class OrderNotificationServiceTest {
         val request = argumentCaptor<SendMessageRequest>()
         verify(smsApi).sendMessage(request.capture())
 
-        assertEquals(merchant.phone?.number, request.firstValue.phoneNumber)
+        assertEquals(customer.phone?.number, request.firstValue.phoneNumber)
         assertEquals("Wutsi: Your order #3094 has been cancelled", request.firstValue.message)
     }
 

@@ -1,4 +1,4 @@
-package com.wutsi.platform.notification.service
+package com.wutsi.platform.notification.event
 
 import com.wutsi.platform.account.WutsiAccountApi
 import com.wutsi.platform.payment.WutsiPaymentApi
@@ -11,7 +11,7 @@ import java.text.DecimalFormat
 import java.util.Locale
 
 @Service
-class PaymentNotificationService(
+class PaymentEventHandler(
     private val accountApi: WutsiAccountApi,
     private val smsApi: WutsiSmsApi,
     private val messages: MessageSource,
