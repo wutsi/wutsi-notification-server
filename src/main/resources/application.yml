@@ -48,7 +48,6 @@ wutsi:
       subscriptions:
         - wutsi-payment
         - wutsi-order
-        - wutsi-shipping
     tracing:
       client-id: ${wutsi.application.name}
       device-id-provider:
