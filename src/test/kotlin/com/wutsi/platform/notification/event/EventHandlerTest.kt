@@ -77,7 +77,7 @@ internal class EventHandlerTest {
     fun onCashin() = ignore(TransactionType.CASHIN)
 
     @Test
-    fun onPayment() = ignore(TransactionType.PAYMENT)
+    fun onCharge() = ignore(TransactionType.CHARGE)
 
     private fun ignore(type: TransactionType) {
         // GIVEN
