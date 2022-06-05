@@ -34,7 +34,7 @@
     <wutsi-account.version>1.0.52</wutsi-account.version>
     <wutsi-order.version>0.0.28</wutsi-order.version>
     <wutsi-payment.version>0.0.57</wutsi-payment.version>
-    <wutsi-platform-core.version>0.0.114</wutsi-platform-core.version>
+    <wutsi-platform-core.version>0.0.115</wutsi-platform-core.version>
     <wutsi-security.version>0.0.21</wutsi-security.version>
     <wutsi-shipping.version>0.0.23</wutsi-shipping.version>
     <wutsi-sms.version>1.0.9</wutsi-sms.version>
