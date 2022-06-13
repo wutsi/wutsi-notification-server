@@ -2,7 +2,7 @@ name: scheduled_run
 
 on:
   schedule:
-    - cron: "0 0,3,6,9,12,15,18,21 * * *"   # Every 3hr
+    - cron: "0 0/3 * * *"   # Every 3hr
 
 jobs:
   test:
