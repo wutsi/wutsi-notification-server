@@ -7,4 +7,7 @@ wutsi:
       type: rabbitmq
       rabbitmq:
         url: ${CLOUDAMQP_URL}
+    url-shortener:
+      bitly:
+        access-token: ${BITLY_ACCESS_TOKEN}
 

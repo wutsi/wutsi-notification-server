@@ -71,13 +71,52 @@ internal class EventHandlerTest {
     }
 
     @Test
-    fun onCashout() = ignore(TransactionType.CASHOUT)
+    fun onCashout() {
+        // GIVEN
+        val payload = createTransactionEventPayload(TransactionType.CASHOUT)
+
+        // WHEN
+        val event = Event(
+            type = EventURN.TRANSACTION_SUCCESSFUL.urn,
+            payload = objectMapper.writeValueAsString(payload)
+        )
+        eventHandler.onEvent(event)
+
+        // THEN
+        verify(payment).onCashoutSuccessful(payload.transactionId, tenant)
+    }
 
     @Test
-    fun onCashin() = ignore(TransactionType.CASHIN)
+    fun onCashin() {
+        // GIVEN
+        val payload = createTransactionEventPayload(TransactionType.CASHIN)
+
+        // WHEN
+        val event = Event(
+            type = EventURN.TRANSACTION_SUCCESSFUL.urn,
+            payload = objectMapper.writeValueAsString(payload)
+        )
+        eventHandler.onEvent(event)
+
+        // THEN
+        verify(payment).onCashinSuccessful(payload.transactionId, tenant)
+    }
 
     @Test
-    fun onCharge() = ignore(TransactionType.CHARGE)
+    fun onCharge() {
+        // GIVEN
+        val payload = createTransactionEventPayload(TransactionType.CHARGE)
+
+        // WHEN
+        val event = Event(
+            type = EventURN.TRANSACTION_SUCCESSFUL.urn,
+            payload = objectMapper.writeValueAsString(payload)
+        )
+        eventHandler.onEvent(event)
+
+        // THEN
+        verify(payment).onChargeSuccessful(payload.transactionId, tenant)
+    }
 
     private fun ignore(type: TransactionType) {
         // GIVEN

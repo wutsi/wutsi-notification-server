@@ -29,10 +29,15 @@ class EventHandler(
         if (EventURN.TRANSACTION_SUCCESSFUL.urn == event.type) {
             val payload = objectMapper.readValue(event.payload, TransactionEventPayload::class.java)
             logger.add("transaction_id", payload.transactionId)
-            logger.add("transaction_type", payload.type)
-            logger.add("order_id", payload.orderId)
+
             if (payload.type == TransactionType.TRANSFER.name) {
                 messageId = payment.onTransferSuccessful(payload.transactionId, getTenant())
+            } else if (payload.type == TransactionType.CHARGE.name) {
+                messageId = payment.onChargeSuccessful(payload.transactionId, getTenant())
+            } else if (payload.type == TransactionType.CASHIN.name) {
+                messageId = payment.onCashinSuccessful(payload.transactionId, getTenant())
+            } else if (payload.type == TransactionType.CASHOUT.name) {
+                messageId = payment.onCashoutSuccessful(payload.transactionId, getTenant())
             }
         } else if (com.wutsi.ecommerce.order.event.EventURN.ORDER_OPENED.urn == event.type) {
             val payload = objectMapper.readValue(event.payload, OrderEventPayload::class.java)

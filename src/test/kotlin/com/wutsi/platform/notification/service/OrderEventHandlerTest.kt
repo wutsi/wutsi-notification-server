@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 internal class OrderEventHandlerTest {
@@ -78,6 +79,7 @@ internal class OrderEventHandlerTest {
 
         assertEquals(merchant.phone?.number, request.firstValue.phoneNumber)
         assertEquals("Wutsi: You have received order #3094 - 5,100 XAF", request.firstValue.message)
+        assertTrue(request.firstValue.message.length < 160)
     }
 
     @Test
@@ -97,6 +99,7 @@ internal class OrderEventHandlerTest {
 
         assertEquals(customer.phone?.number, request.firstValue.phoneNumber)
         assertEquals("Wutsi: Your order #3094 has been cancelled", request.firstValue.message)
+        assertTrue(request.firstValue.message.length < 160)
     }
 
     @Test
@@ -120,7 +123,7 @@ internal class OrderEventHandlerTest {
 
         assertEquals(customer.phone?.number, request.firstValue.phoneNumber)
         assertEquals(
-            "Wutsi: Your order #3094 is now ready and available in store for pickup.",
+            "Wutsi: Your order #3094 is now ready and available in store for pickup",
             request.firstValue.message
         )
     }

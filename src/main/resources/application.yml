@@ -48,10 +48,16 @@ wutsi:
       subscriptions:
         - wutsi-payment
         - wutsi-order
+      rabbitmq:
+        queue-ttl-seconds: 900  # Keep messages in the queue for maximum of 15 min. To present sending very old SMS
     tracing:
       client-id: ${wutsi.application.name}
       device-id-provider:
         type: header
+    url-shortener:
+      type: bitly
+      bitly:
+        access-token: 7c6a88dd1ca7633b0d5e15336184848e0ec5d22c
 
 logging:
   level:
