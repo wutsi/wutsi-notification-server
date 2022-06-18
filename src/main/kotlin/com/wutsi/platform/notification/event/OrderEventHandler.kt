@@ -9,6 +9,7 @@ import com.wutsi.platform.core.logging.KVLogger
 import com.wutsi.platform.core.url.UrlShortener
 import com.wutsi.platform.sms.WutsiSmsApi
 import com.wutsi.platform.sms.dto.SendMessageRequest
+import com.wutsi.platform.tenant.WutsiTenantApi
 import com.wutsi.platform.tenant.dto.Tenant
 import org.springframework.context.MessageSource
 import org.springframework.stereotype.Service
@@ -19,19 +20,21 @@ import java.util.Locale
 class OrderEventHandler(
     private val accountApi: WutsiAccountApi,
     private val smsApi: WutsiSmsApi,
-    private val messages: MessageSource,
+    private val tenantApi: WutsiTenantApi,
     private val orderApi: WutsiOrderApi,
     private val shippingApi: WutsiShippingApi,
+    private val messages: MessageSource,
     private val logger: KVLogger,
     private val urlShortener: UrlShortener
 ) {
     /**
      * Send notification to merchant
      */
-    fun onOrderOpened(orderId: String, tenant: Tenant): String {
+    fun onOrderOpened(orderId: String): String {
         val order = orderApi.getOrder(orderId).order
         val merchant = accountApi.getAccount(order.merchantId).account
         val customer = accountApi.getAccount(order.accountId).account
+        val tenant = tenantApi.getTenant(order.tenantId).tenant
         logger.add("merchant_id", merchant.id)
 
         return smsApi.sendMessage(
@@ -50,8 +53,9 @@ class OrderEventHandler(
         ).id
     }
 
-    fun onOrderCancelled(orderId: String, tenant: Tenant): String {
+    fun onOrderCancelled(orderId: String): String {
         val order = orderApi.getOrder(orderId).order
+        val tenant = tenantApi.getTenant(order.tenantId).tenant
         val customer = accountApi.getAccount(order.accountId).account
         logger.add("customer_id", customer.id)
 
@@ -70,8 +74,9 @@ class OrderEventHandler(
     /**
      * Send notification for in-store pickup
      */
-    fun onOrderReadyForPickup(orderId: String, tenant: Tenant): String? {
+    fun onOrderReadyForPickup(orderId: String): String? {
         val order = orderApi.getOrder(orderId).order
+        val tenant = tenantApi.getTenant(order.tenantId).tenant
         val shipping = order.shippingId?.let { shippingApi.getShipping(it).shipping }
         logger.add("shipping_id", shipping?.id)
         logger.add("shipping_type", shipping?.type)

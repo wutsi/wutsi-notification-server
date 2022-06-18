@@ -7,7 +7,7 @@ import com.wutsi.platform.payment.WutsiPaymentApi
 import com.wutsi.platform.payment.dto.Transaction
 import com.wutsi.platform.sms.WutsiSmsApi
 import com.wutsi.platform.sms.dto.SendMessageRequest
-import com.wutsi.platform.tenant.dto.Tenant
+import com.wutsi.platform.tenant.WutsiTenantApi
 import org.springframework.context.MessageSource
 import org.springframework.stereotype.Service
 import java.text.DecimalFormat
@@ -16,6 +16,7 @@ import java.util.Locale
 @Service
 class PaymentEventHandler(
     private val accountApi: WutsiAccountApi,
+    private val tenantApi: WutsiTenantApi,
     private val smsApi: WutsiSmsApi,
     private val messages: MessageSource,
     private val paymentApi: WutsiPaymentApi,
@@ -25,7 +26,7 @@ class PaymentEventHandler(
     /**
      * Send SMS notification to the recipient
      */
-    fun onTransferSuccessful(transactionId: String, tenant: Tenant): String? {
+    fun onTransferSuccessful(transactionId: String): String? {
         val tx = paymentApi.getTransaction(transactionId).transaction
         log(tx)
         if (tx.recipientId == null)
@@ -33,6 +34,7 @@ class PaymentEventHandler(
 
         val sender = accountApi.getAccount(tx.accountId).account
         val recipient = accountApi.getAccount(tx.recipientId!!).account
+        val tenant = tenantApi.getTenant(tx.tenantId).tenant
         val formatter = DecimalFormat(tenant.monetaryFormat)
 
         return smsApi.sendMessage(
@@ -51,7 +53,7 @@ class PaymentEventHandler(
     /**
      * Send SMS notification to the recipient
      */
-    fun onChargeSuccessful(transactionId: String, tenant: Tenant): String? {
+    fun onChargeSuccessful(transactionId: String): String? {
         val tx = paymentApi.getTransaction(transactionId).transaction
         log(tx)
         if (tx.recipientId == null || tx.orderId == null)
@@ -60,6 +62,7 @@ class PaymentEventHandler(
         val orderId = tx.orderId!!.uppercase().takeLast(4)
         val sender = accountApi.getAccount(tx.accountId).account
         val recipient = accountApi.getAccount(tx.recipientId!!).account
+        val tenant = tenantApi.getTenant(tx.tenantId).tenant
         val formatter = DecimalFormat(tenant.monetaryFormat)
         val url = urlShortener.shorten("${tenant.webappUrl}/order?id=$orderId")
 
@@ -78,11 +81,12 @@ class PaymentEventHandler(
     /**
      * Send SMS notification to account owner
      */
-    fun onCashinSuccessful(transactionId: String, tenant: Tenant): String? {
+    fun onCashinSuccessful(transactionId: String): String? {
         val tx = paymentApi.getTransaction(transactionId).transaction
         log(tx)
 
         val account = accountApi.getAccount(tx.accountId).account
+        val tenant = tenantApi.getTenant(tx.tenantId).tenant
         val formatter = DecimalFormat(tenant.monetaryFormat)
 
         return smsApi.sendMessage(
@@ -100,11 +104,12 @@ class PaymentEventHandler(
     /**
      * Send SMS notification to account owner
      */
-    fun onCashoutSuccessful(transactionId: String, tenant: Tenant): String? {
+    fun onCashoutSuccessful(transactionId: String): String? {
         val tx = paymentApi.getTransaction(transactionId).transaction
         log(tx)
 
         val account = accountApi.getAccount(tx.accountId).account
+        val tenant = tenantApi.getTenant(tx.tenantId).tenant
         val formatter = DecimalFormat(tenant.monetaryFormat)
 
         return smsApi.sendMessage(

@@ -9,7 +9,6 @@ import com.wutsi.platform.payment.entity.TransactionType
 import com.wutsi.platform.payment.event.EventURN
 import com.wutsi.platform.payment.event.TransactionEventPayload
 import com.wutsi.platform.tenant.WutsiTenantApi
-import com.wutsi.platform.tenant.dto.Tenant
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Service
 
@@ -31,33 +30,28 @@ class EventHandler(
             logger.add("transaction_id", payload.transactionId)
 
             if (payload.type == TransactionType.TRANSFER.name) {
-                messageId = payment.onTransferSuccessful(payload.transactionId, getTenant())
+                messageId = payment.onTransferSuccessful(payload.transactionId)
             } else if (payload.type == TransactionType.CHARGE.name) {
-                messageId = payment.onChargeSuccessful(payload.transactionId, getTenant())
+                messageId = payment.onChargeSuccessful(payload.transactionId)
             } else if (payload.type == TransactionType.CASHIN.name) {
-                messageId = payment.onCashinSuccessful(payload.transactionId, getTenant())
+                messageId = payment.onCashinSuccessful(payload.transactionId)
             } else if (payload.type == TransactionType.CASHOUT.name) {
-                messageId = payment.onCashoutSuccessful(payload.transactionId, getTenant())
+                messageId = payment.onCashoutSuccessful(payload.transactionId)
             }
         } else if (com.wutsi.ecommerce.order.event.EventURN.ORDER_OPENED.urn == event.type) {
             val payload = objectMapper.readValue(event.payload, OrderEventPayload::class.java)
             logger.add("order_id", payload.orderId)
-            messageId = order.onOrderOpened(payload.orderId, getTenant())
+            messageId = order.onOrderOpened(payload.orderId)
         } else if (com.wutsi.ecommerce.order.event.EventURN.ORDER_CANCELLED.urn == event.type) {
             val payload = objectMapper.readValue(event.payload, OrderEventPayload::class.java)
             logger.add("order_id", payload.orderId)
-            messageId = order.onOrderCancelled(payload.orderId, getTenant())
+            messageId = order.onOrderCancelled(payload.orderId)
         } else if (com.wutsi.ecommerce.order.event.EventURN.ORDER_READY_FOR_PICKUP.urn == event.type) {
             val payload = objectMapper.readValue(event.payload, OrderEventPayload::class.java)
             logger.add("order_id", payload.orderId)
-            messageId = order.onOrderReadyForPickup(payload.orderId, getTenant())
+            messageId = order.onOrderReadyForPickup(payload.orderId)
         }
 
         logger.add("message_id", messageId)
-    }
-
-    private fun getTenant(): Tenant {
-        val tenantId = tracingContext.tenantId()!!.toLong()
-        return tenantApi.getTenant(tenantId).tenant
     }
 }

@@ -32,9 +32,9 @@
     <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
 
     <wutsi-account.version>1.0.57</wutsi-account.version>
-    <wutsi-order.version>0.0.28</wutsi-order.version>
-    <wutsi-payment.version>0.0.63</wutsi-payment.version>
-    <wutsi-platform-core.version>0.0.116-SNAPSHOT</wutsi-platform-core.version>
+    <wutsi-order.version>0.0.30</wutsi-order.version>
+    <wutsi-payment.version>0.0.64</wutsi-payment.version>
+    <wutsi-platform-core.version>0.0.117</wutsi-platform-core.version>
     <wutsi-security.version>0.0.21</wutsi-security.version>
     <wutsi-shipping.version>0.0.26</wutsi-shipping.version>
     <wutsi-sms.version>1.0.10</wutsi-sms.version>

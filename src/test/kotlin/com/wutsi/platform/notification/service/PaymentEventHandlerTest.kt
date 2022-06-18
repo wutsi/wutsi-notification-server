@@ -18,6 +18,8 @@ import com.wutsi.platform.payment.entity.TransactionType
 import com.wutsi.platform.sms.WutsiSmsApi
 import com.wutsi.platform.sms.dto.SendMessageRequest
 import com.wutsi.platform.sms.dto.SendMessageResponse
+import com.wutsi.platform.tenant.WutsiTenantApi
+import com.wutsi.platform.tenant.dto.GetTenantResponse
 import com.wutsi.platform.tenant.dto.Tenant
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -39,6 +41,9 @@ internal class PaymentEventHandlerTest {
     private lateinit var paymentApi: WutsiPaymentApi
 
     @MockBean
+    private lateinit var tenantApi: WutsiTenantApi
+
+    @MockBean
     private lateinit var tracingContext: TracingContext
 
     @Autowired
@@ -54,8 +59,8 @@ internal class PaymentEventHandlerTest {
     fun setUp() {
         doReturn("1").whenever(tracingContext).tenantId()
 
-        val smsResponse = SendMessageResponse(id = "xxxx")
-        doReturn(smsResponse).whenever(smsApi).sendMessage(any())
+        doReturn(SendMessageResponse(id = "xxxx")).whenever(smsApi).sendMessage(any())
+        doReturn(GetTenantResponse(tenant)).whenever(tenantApi).getTenant(any())
     }
 
     @Test
@@ -71,7 +76,7 @@ internal class PaymentEventHandlerTest {
         doReturn(GetAccountResponse(recipient)).whenever(accountApi).getAccount(tx.recipientId!!)
 
         // WHEN
-        service.onTransferSuccessful("111", tenant)
+        service.onTransferSuccessful("111")
 
         // THEN
         val request = argumentCaptor<SendMessageRequest>()
@@ -95,7 +100,7 @@ internal class PaymentEventHandlerTest {
         doReturn(GetAccountResponse(recipient)).whenever(accountApi).getAccount(tx.recipientId!!)
 
         // WHEN
-        service.onTransferSuccessful("111", tenant)
+        service.onTransferSuccessful("111")
 
         // THEN
         val request = argumentCaptor<SendMessageRequest>()
@@ -118,7 +123,7 @@ internal class PaymentEventHandlerTest {
         doReturn(GetAccountResponse(recipient)).whenever(accountApi).getAccount(tx.recipientId!!)
 
         // WHEN
-        service.onChargeSuccessful("111", tenant)
+        service.onChargeSuccessful("111")
 
         // THEN
         val request = argumentCaptor<SendMessageRequest>()
@@ -142,7 +147,7 @@ internal class PaymentEventHandlerTest {
         doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(tx.accountId)
 
         // WHEN
-        service.onCashoutSuccessful("111", tenant)
+        service.onCashoutSuccessful("111")
 
         // THEN
         val request = argumentCaptor<SendMessageRequest>()
@@ -166,7 +171,7 @@ internal class PaymentEventHandlerTest {
         doReturn(GetAccountResponse(sender)).whenever(accountApi).getAccount(tx.accountId)
 
         // WHEN
-        service.onCashinSuccessful("111", tenant)
+        service.onCashinSuccessful("111")
 
         // THEN
         val request = argumentCaptor<SendMessageRequest>()

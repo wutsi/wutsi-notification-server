@@ -21,6 +21,8 @@ import com.wutsi.platform.notification.event.OrderEventHandler
 import com.wutsi.platform.sms.WutsiSmsApi
 import com.wutsi.platform.sms.dto.SendMessageRequest
 import com.wutsi.platform.sms.dto.SendMessageResponse
+import com.wutsi.platform.tenant.WutsiTenantApi
+import com.wutsi.platform.tenant.dto.GetTenantResponse
 import com.wutsi.platform.tenant.dto.Tenant
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -43,6 +45,9 @@ internal class OrderEventHandlerTest {
 
     @MockBean
     private lateinit var orderApi: WutsiOrderApi
+
+    @MockBean
+    private lateinit var tenantApi: WutsiTenantApi
 
     @MockBean
     private lateinit var tracingContext: TracingContext
@@ -74,12 +79,14 @@ internal class OrderEventHandlerTest {
 
         customer = createAccount(order.accountId, "Roger Milla")
         doReturn(GetAccountResponse(customer)).whenever(accountApi).getAccount(order.accountId)
+
+        doReturn(GetTenantResponse(tenant)).whenever(tenantApi).getTenant(any())
     }
 
     @Test
     fun onOrderOpened() {
         // WHEN
-        service.onOrderOpened(order.id, tenant)
+        service.onOrderOpened(order.id)
 
         // THEN
         val request = argumentCaptor<SendMessageRequest>()
@@ -102,7 +109,7 @@ internal class OrderEventHandlerTest {
         doReturn(GetAccountResponse(customer)).whenever(accountApi).getAccount(order.accountId)
 
         // WHEN
-        service.onOrderCancelled(order.id, tenant)
+        service.onOrderCancelled(order.id)
 
         // THEN
         val request = argumentCaptor<SendMessageRequest>()
@@ -126,7 +133,7 @@ internal class OrderEventHandlerTest {
         doReturn(GetAccountResponse(customer)).whenever(accountApi).getAccount(any())
 
         // WHEN
-        service.onOrderReadyForPickup("111", tenant)
+        service.onOrderReadyForPickup("111")
 
         // THEN
         val request = argumentCaptor<SendMessageRequest>()
@@ -139,7 +146,7 @@ internal class OrderEventHandlerTest {
         )
     }
 
-    private fun createOrder(shippingId: Long? = null) = com.wutsi.ecommerce.order.dto.Order(
+    private fun createOrder(shippingId: Long? = null) = Order(
         id = "39043094",
         accountId = 1L,
         merchantId = 11L,

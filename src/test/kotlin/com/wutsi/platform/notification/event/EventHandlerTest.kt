@@ -67,7 +67,7 @@ internal class EventHandlerTest {
         eventHandler.onEvent(event)
 
         // THEN
-        verify(payment).onTransferSuccessful(payload.transactionId, tenant)
+        verify(payment).onTransferSuccessful(payload.transactionId)
     }
 
     @Test
@@ -83,7 +83,7 @@ internal class EventHandlerTest {
         eventHandler.onEvent(event)
 
         // THEN
-        verify(payment).onCashoutSuccessful(payload.transactionId, tenant)
+        verify(payment).onCashoutSuccessful(payload.transactionId)
     }
 
     @Test
@@ -99,7 +99,7 @@ internal class EventHandlerTest {
         eventHandler.onEvent(event)
 
         // THEN
-        verify(payment).onCashinSuccessful(payload.transactionId, tenant)
+        verify(payment).onCashinSuccessful(payload.transactionId)
     }
 
     @Test
@@ -115,22 +115,7 @@ internal class EventHandlerTest {
         eventHandler.onEvent(event)
 
         // THEN
-        verify(payment).onChargeSuccessful(payload.transactionId, tenant)
-    }
-
-    private fun ignore(type: TransactionType) {
-        // GIVEN
-        val payload = createTransactionEventPayload(type)
-
-        // WHEN
-        val event = Event(
-            type = EventURN.TRANSACTION_SUCCESSFUL.urn,
-            payload = objectMapper.writeValueAsString(payload)
-        )
-        eventHandler.onEvent(event)
-
-        // THEN
-        noOp()
+        verify(payment).onChargeSuccessful(payload.transactionId)
     }
 
     // Order events
@@ -146,7 +131,7 @@ internal class EventHandlerTest {
         eventHandler.onEvent(event)
 
         // THEN
-        verify(order).onOrderOpened(payload.orderId, tenant)
+        verify(order).onOrderOpened(payload.orderId)
     }
 
     @Test
@@ -161,7 +146,7 @@ internal class EventHandlerTest {
         eventHandler.onEvent(event)
 
         // THEN
-        verify(order).onOrderCancelled(payload.orderId, tenant)
+        verify(order).onOrderCancelled(payload.orderId)
     }
 
     @Test
@@ -191,7 +176,7 @@ internal class EventHandlerTest {
         eventHandler.onEvent(event)
 
         // THEN
-        verify(order).onOrderReadyForPickup(payload.orderId, tenant)
+        verify(order).onOrderReadyForPickup(payload.orderId)
     }
 
     @Test
@@ -225,9 +210,9 @@ internal class EventHandlerTest {
     }
 
     private fun noOp() {
-        verify(order, never()).onOrderOpened(any(), any())
-        verify(order, never()).onOrderCancelled(any(), any())
-        verify(payment, never()).onTransferSuccessful(any(), any())
+        verify(order, never()).onOrderOpened(any())
+        verify(order, never()).onOrderCancelled(any())
+        verify(payment, never()).onTransferSuccessful(any())
     }
 
     private fun createOrderEventPayload() = OrderEventPayload(
