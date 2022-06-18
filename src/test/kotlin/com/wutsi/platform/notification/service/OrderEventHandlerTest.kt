@@ -7,6 +7,7 @@ import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import com.wutsi.ecommerce.order.WutsiOrderApi
 import com.wutsi.ecommerce.order.dto.GetOrderResponse
+import com.wutsi.ecommerce.order.dto.Order
 import com.wutsi.ecommerce.shipping.WutsiShippingApi
 import com.wutsi.ecommerce.shipping.dto.GetShippingResponse
 import com.wutsi.ecommerce.shipping.dto.Shipping
@@ -49,9 +50,14 @@ internal class OrderEventHandlerTest {
     @Autowired
     private lateinit var service: OrderEventHandler
 
+    private var order: Order = createOrder()
+    private lateinit var merchant: Account
+    private lateinit var customer: Account
+
     private val tenant = Tenant(
         id = 1,
-        monetaryFormat = "#,###,##0 XAF"
+        monetaryFormat = "#,###,##0 XAF",
+        webappUrl = "https://www.wutsi.me"
     )
 
     @BeforeEach
@@ -60,16 +66,18 @@ internal class OrderEventHandlerTest {
 
         val smsResponse = SendMessageResponse(id = "xxxx")
         doReturn(smsResponse).whenever(smsApi).sendMessage(any())
+
+        doReturn(GetOrderResponse(order)).whenever(orderApi).getOrder(any())
+
+        merchant = createAccount(order.merchantId, "Ray Sponsible")
+        doReturn(GetAccountResponse(merchant)).whenever(accountApi).getAccount(order.merchantId)
+
+        customer = createAccount(order.accountId, "Roger Milla")
+        doReturn(GetAccountResponse(customer)).whenever(accountApi).getAccount(order.accountId)
     }
 
     @Test
     fun onOrderOpened() {
-        val order = createOrder()
-        doReturn(GetOrderResponse(order)).whenever(orderApi).getOrder(any())
-
-        val merchant = createAccount(order.merchantId, "Ray Sponsible")
-        doReturn(GetAccountResponse(merchant)).whenever(accountApi).getAccount(order.merchantId)
-
         // WHEN
         service.onOrderOpened(order.id, tenant)
 
@@ -78,7 +86,10 @@ internal class OrderEventHandlerTest {
         verify(smsApi).sendMessage(request.capture())
 
         assertEquals(merchant.phone?.number, request.firstValue.phoneNumber)
-        assertEquals("Wutsi: You have received order #3094 - 5,100 XAF", request.firstValue.message)
+        assertEquals(
+            "Wutsi: You have received a new order of 5,100 XAF from Roger Milla. https://bit.ly/3N4OW05",
+            request.firstValue.message
+        )
         assertTrue(request.firstValue.message.length < 160)
     }
 
@@ -98,7 +109,7 @@ internal class OrderEventHandlerTest {
         verify(smsApi).sendMessage(request.capture())
 
         assertEquals(customer.phone?.number, request.firstValue.phoneNumber)
-        assertEquals("Wutsi: Your order #3094 has been cancelled", request.firstValue.message)
+        assertEquals("Wutsi: Your order #3094 has been cancelled. https://bit.ly/3N4OW05", request.firstValue.message)
         assertTrue(request.firstValue.message.length < 160)
     }
 
@@ -123,7 +134,7 @@ internal class OrderEventHandlerTest {
 
         assertEquals(customer.phone?.number, request.firstValue.phoneNumber)
         assertEquals(
-            "Wutsi: Your order #3094 is now ready and available in store for pickup",
+            "Wutsi: Your order #3094 is now available in store for pickup. https://bit.ly/3tLN5X7",
             request.firstValue.message
         )
     }

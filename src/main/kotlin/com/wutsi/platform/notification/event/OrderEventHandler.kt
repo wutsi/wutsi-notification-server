@@ -6,6 +6,7 @@ import com.wutsi.ecommerce.shipping.WutsiShippingApi
 import com.wutsi.ecommerce.shipping.entity.ShippingType
 import com.wutsi.platform.account.WutsiAccountApi
 import com.wutsi.platform.core.logging.KVLogger
+import com.wutsi.platform.core.url.UrlShortener
 import com.wutsi.platform.sms.WutsiSmsApi
 import com.wutsi.platform.sms.dto.SendMessageRequest
 import com.wutsi.platform.tenant.dto.Tenant
@@ -21,18 +22,27 @@ class OrderEventHandler(
     private val messages: MessageSource,
     private val orderApi: WutsiOrderApi,
     private val shippingApi: WutsiShippingApi,
-    private val logger: KVLogger
+    private val logger: KVLogger,
+    private val urlShortener: UrlShortener
 ) {
+    /**
+     * Send notification to merchant
+     */
     fun onOrderOpened(orderId: String, tenant: Tenant): String {
         val order = orderApi.getOrder(orderId).order
         val merchant = accountApi.getAccount(order.merchantId).account
+        val customer = accountApi.getAccount(order.accountId).account
         logger.add("merchant_id", merchant.id)
 
         return smsApi.sendMessage(
             SendMessageRequest(
                 message = getText(
                     key = "sms.order-opened",
-                    args = arrayOf(shortOrderId(order), DecimalFormat(tenant.monetaryFormat).format(order.totalPrice)),
+                    args = arrayOf(
+                        DecimalFormat(tenant.monetaryFormat).format(order.totalPrice),
+                        customer.displayName ?: "",
+                        orderUrl(orderId, tenant),
+                    ),
                     locale = Locale(merchant.language)
                 ),
                 phoneNumber = merchant.phone!!.number
@@ -49,7 +59,7 @@ class OrderEventHandler(
             SendMessageRequest(
                 message = getText(
                     key = "sms.order-cancelled",
-                    args = arrayOf(shortOrderId(order)),
+                    args = arrayOf(shortOrderId(order), orderUrl(orderId, tenant)),
                     locale = Locale(customer.language)
                 ),
                 phoneNumber = customer.phone!!.number
@@ -74,7 +84,7 @@ class OrderEventHandler(
                 SendMessageRequest(
                     message = getText(
                         key = "sms.order-ready-for-pickup-in-store",
-                        args = arrayOf(shortOrderId(order)),
+                        args = arrayOf(shortOrderId(order), orderUrl(orderId, tenant)),
                         locale = Locale(customer.language)
                     ),
                     phoneNumber = customer.phone!!.number
@@ -83,6 +93,9 @@ class OrderEventHandler(
         }
         return null
     }
+
+    private fun orderUrl(orderId: String, tenant: Tenant): String =
+        urlShortener.shorten("${tenant.webappUrl}/order?id=$orderId")
 
     private fun shortOrderId(order: Order): String =
         order.id.uppercase().takeLast(4)
